@@ -1,0 +1,12 @@
+DOMAIN CONTEXT -- BANKING
+Generated: 2026-05-31T19:13:17.143160
+Keywords: 
+
+==================================================
+HackerNews Signal:
+  [7pts] Show HN: My second startup; solving the problems from my first startup
+  [7pts] Looking for a cofounder to replace finance ERPs
+  [240pts] Launch HN: Yotta Savings (YC S20) – Behavioral psychology to help people save
+  [70pts] Launch HN: Halluminate (YC S25) – Simulating the internet to train computer use
+  [8pts] Show HN (YC S25): Well – MCP AI-Based Collection of Invoices
+  [1pts] Show HN: Checking if financial processes can be bypassed before deployment

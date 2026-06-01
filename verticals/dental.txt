@@ -1,0 +1,12 @@
+DOMAIN CONTEXT -- DENTAL
+Generated: 2026-05-31T18:22:50.209396
+Keywords: 
+
+==================================================
+HackerNews Signal:
+  [36pts] Twitter/Evan Williams is hiring a "Founder Associate"
+  [8pts] Ask HN:  First I found a client, then I build a Product, now..
+  [4pts] Getting Quality Sleep
+  [1pts] Why machine learning fails at prioritization problems
+  [43pts] Ask HN: I desperately want a solo business
+  [133pts] Launch HN: OpenUnit (YC W20) – Software for managing self-storage facilities

@@ -1,6 +1,6 @@
 DOMAIN CONTEXT -- RESTAURANT
-Generated: 2026-05-31T00:10:32.333865
-Keywords: online ordering
+Generated: 2026-05-31T23:01:50.209960
+Keywords: 
 
 ==================================================
 OPERATOR INTEL:
@@ -11,18 +11,3 @@ OPERATOR INTEL:
 - Labor = 30-35% of revenue (biggest cost)
 - Food cost target: 28-35% of revenue
 - Break-even typically 18-24 months
-BLS Employment (thousands):
-  April 2026: 12345.6K employees
-  March 2026: 12163.7K employees
-  February 2026: 12041.6K employees
-  January 2026: 12007.8K employees
-  Annual 2025: 12266.4K employees
-  December 2025: 12268.6K employees
-FRED error: The read operation timed out
-WorldBank US GDP:
-  2024: $28,750,956,130,731
-  2023: $27,292,170,793,214
-  2022: $25,604,848,907,611
-  2021: $23,315,080,560,000
-HackerNews Signal:
-  [38pts] Launch HN: Boostly (YC S22) – SMS marketing for restaurants

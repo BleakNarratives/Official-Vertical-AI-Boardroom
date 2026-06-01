@@ -1,0 +1,1705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>VERTICAL AI // THE BOARDROOM</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=VT323&family=Special+Elite&family=Bebas+Neue&family=Courier+Prime:wght@400;700&display=swap');
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
+  width: 100%; height: 100%;
+  background: #0a0704;
+  overflow: hidden;
+  font-family: 'Courier Prime', monospace;
+  color: #e8d5a0;
+}
+
+#canvas-container {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+}
+
+#canvas-container canvas { display: block; }
+
+/* ── TICKER ── */
+#ticker {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 22px;
+  background: #c8861e;
+  color: #0a0704;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 3px;
+  overflow: hidden;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+}
+
+#ticker-text {
+  white-space: nowrap;
+  animation: tickerScroll 45s linear infinite;
+  padding-left: 100vw;
+}
+
+@keyframes tickerScroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+
+/* ── HUD OVERLAY ── */
+#hud {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+}
+
+#hud-top {
+  position: absolute;
+  top: 28px; left: 0; right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 8px 14px;
+  background: linear-gradient(180deg, rgba(10,7,4,0.85) 0%, transparent 100%);
+}
+
+.hud-brand {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.5rem;
+  letter-spacing: 5px;
+  color: #ffb347;
+  text-shadow: 0 0 15px rgba(255,179,71,0.6);
+}
+
+.hud-brand span { color: #e8d5a0; opacity: 0.5; font-size: 0.9rem; }
+
+.hud-stats {
+  text-align: right;
+  font-size: 0.5rem;
+  letter-spacing: 2px;
+  color: #4a3010;
+  line-height: 1.9;
+}
+
+.hud-stats em { color: #ffb347; font-style: normal; }
+
+/* ── SWARM BAR ── */
+#swarm-bar {
+  position: fixed;
+  bottom: 80px; left: 0; right: 0;
+  height: 20px;
+  background: rgba(10,7,4,0.8);
+  border-top: 1px solid #2a1a08;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 10px;
+  z-index: 100;
+  overflow: hidden;
+}
+
+.sw {
+  font-size: 0.48rem;
+  letter-spacing: 1px;
+  color: #3a2008;
+  white-space: nowrap;
+  transition: color 0.3s;
+}
+.sw.live  { color: #c8861e; }
+.sw.alert { color: #cc4433; }
+
+/* ── INPUT AREA ── */
+#input-area {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 80px;
+  background: rgba(10,7,4,0.95);
+  border-top: 2px solid #2a1a08;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+
+#controls-row {
+  display: flex;
+  gap: 4px;
+  padding: 4px 8px 0;
+  border-bottom: 1px solid #1a1004;
+}
+
+.ctrl {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 2px;
+  color: #4a3010;
+  border: 1px solid #2a1a08;
+  background: transparent;
+  padding: 2px 8px;
+  cursor: pointer;
+  pointer-events: all;
+  transition: all 0.15s;
+}
+.ctrl:hover { color: #ffb347; border-color: #ffb347; }
+.ctrl.on    { color: #ffb347; border-color: #ffb347; background: rgba(255,179,71,0.07); }
+
+#input-row {
+  display: flex;
+  flex: 1;
+  align-items: stretch;
+}
+
+.prompt-label {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: 2px;
+  color: #ffb347;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  border-right: 1px solid #1a1004;
+  text-shadow: 0 0 8px rgba(255,179,71,0.4);
+  pointer-events: none;
+}
+
+#brief {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.75rem;
+  color: #e8d5a0;
+  padding: 0 10px;
+  caret-color: #ffb347;
+  pointer-events: all;
+}
+
+#brief::placeholder { color: #2a1a08; font-size: 0.65rem; }
+
+#btn-convene {
+  padding: 0 16px;
+  background: transparent;
+  border: none;
+  border-left: 1px solid #1a1004;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.95rem;
+  letter-spacing: 3px;
+  color: #ffb347;
+  cursor: pointer;
+  pointer-events: all;
+  text-shadow: 0 0 6px rgba(255,179,71,0.3);
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+#btn-convene:hover { background: rgba(255,179,71,0.07); text-shadow: 0 0 15px #ffb347; }
+#btn-convene:disabled { opacity: 0.25; cursor: not-allowed; }
+
+#file-input { display: none; }
+
+/* ── TRANSCRIPT PANEL ── */
+#transcript {
+  position: fixed;
+  right: 0; top: 22px; bottom: 100px;
+  width: 300px;
+  background: rgba(8,6,3,0.97);
+  border-left: 1px solid #2a1a08;
+  display: flex;
+  flex-direction: column;
+  z-index: 150;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+  pointer-events: all;
+}
+
+#transcript.open { transform: translateX(0); }
+
+#trans-header {
+  padding: 8px 12px;
+  border-bottom: 1px solid #2a1a08;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.85rem;
+  letter-spacing: 3px;
+  color: #ffb347;
+  flex-shrink: 0;
+}
+
+#trans-close {
+  cursor: pointer;
+  font-size: 0.6rem;
+  color: #4a3010;
+  border: 1px solid #2a1a08;
+  padding: 1px 7px;
+  transition: all 0.15s;
+}
+
+#trans-close:hover { color: #ffb347; border-color: #ffb347; }
+
+#trans-feed {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+#trans-feed::-webkit-scrollbar { width: 2px; }
+#trans-feed::-webkit-scrollbar-thumb { background: #2a1a08; }
+
+.tm { animation: msgIn 0.2s ease; }
+@keyframes msgIn { from { opacity:0; transform:translateY(3px); } to { opacity:1; transform:translateY(0); } }
+
+.tm-who {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 2px;
+  margin-bottom: 2px;
+}
+
+.tm-text {
+  font-size: 0.62rem;
+  line-height: 1.65;
+  color: rgba(232,213,160,0.72);
+}
+
+.tm-sys {
+  font-size: 0.52rem;
+  color: #2a1a08;
+  text-align: center;
+  letter-spacing: 2px;
+  padding: 2px 0;
+  border-top: 1px solid #0f0a04;
+  border-bottom: 1px solid #0f0a04;
+}
+
+.tm-verdict {
+  border: 1px solid #ffb347;
+  background: rgba(255,179,71,0.04);
+  padding: 5px 8px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1rem;
+  letter-spacing: 4px;
+  text-align: center;
+  text-shadow: 0 0 8px currentColor;
+}
+
+/* ── ONE-ON-ONE OVERLAY ── */
+#oo1 {
+  position: fixed;
+  inset: 22px 0 100px 0;
+  background: rgba(8,6,3,0.97);
+  z-index: 200;
+  display: none;
+  flex-direction: column;
+  padding: 16px;
+  pointer-events: all;
+}
+
+#oo1.open { display: flex; }
+
+#oo1-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid #2a1a08;
+  padding-bottom: 12px;
+  flex-shrink: 0;
+}
+
+#oo1-avatar {
+  font-family: 'VT323', monospace;
+  font-size: 3rem;
+  line-height: 1;
+}
+
+#oo1-info { flex: 1; }
+#oo1-name { font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; letter-spacing: 3px; }
+#oo1-title { font-size: 0.52rem; color: #4a3010; letter-spacing: 2px; margin-top: 2px; }
+
+#oo1-back {
+  cursor: pointer;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 2px;
+  color: #4a3010;
+  border: 1px solid #2a1a08;
+  padding: 4px 12px;
+  transition: all 0.15s;
+}
+#oo1-back:hover { color: #ffb347; border-color: #ffb347; }
+
+#oo1-chat {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+#oo1-chat::-webkit-scrollbar { width: 2px; }
+#oo1-chat::-webkit-scrollbar-thumb { background: #2a1a08; }
+
+.oo1m {
+  font-size: 0.68rem;
+  line-height: 1.65;
+  padding: 6px 10px;
+  border-left: 2px solid;
+  animation: msgIn 0.2s ease;
+}
+
+.oo1m.user   { border-color: #6a5030; color: rgba(232,213,160,0.7); }
+.oo1m.agent  { color: #e8d5a0; }
+
+#oo1-row {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+#oo1-input {
+  flex: 1;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid #2a1a08;
+  color: #e8d5a0;
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.7rem;
+  padding: 7px 10px;
+  outline: none;
+  caret-color: #ffb347;
+}
+
+#oo1-send {
+  padding: 7px 14px;
+  background: transparent;
+  border: 1px solid #4a3010;
+  color: #ffb347;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.8rem;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+#oo1-send:hover { border-color: #ffb347; }
+
+/* ── LOADING OVERLAY ── */
+#loading {
+  position: fixed;
+  inset: 22px 0 100px 0;
+  background: rgba(8,6,3,0.7);
+  z-index: 300;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+}
+
+#loading.show { display: flex; }
+
+#loading-text {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.2rem;
+  letter-spacing: 5px;
+  color: #ffb347;
+  text-shadow: 0 0 20px #ffb347;
+  animation: loadpulse 0.8s ease-in-out infinite;
+}
+
+@keyframes loadpulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+#loading-sub {
+  font-size: 0.58rem;
+  color: #4a3010;
+  letter-spacing: 3px;
+}
+
+/* ── CLICK HINT ── */
+#click-hint {
+  position: fixed;
+  bottom: 110px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.52rem;
+  color: #2a1a08;
+  letter-spacing: 3px;
+  pointer-events: none;
+  z-index: 60;
+  animation: hintfade 4s ease-in-out infinite;
+}
+
+@keyframes hintfade { 0%,100%{opacity:0} 30%,70%{opacity:1} }
+
+/* SCANLINES */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.07) 3px, rgba(0,0,0,0.07) 4px);
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* VIGNETTE */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 40%, transparent 50%, rgba(0,0,0,0.65) 100%);
+  pointer-events: none;
+  z-index: 9998;
+}
+</style>
+</head>
+<body>
+
+<!-- TICKER -->
+<div id="ticker">
+  <div id="ticker-text">
+    VERTICAL AI BOARDROOM v3.0 &nbsp;◆&nbsp; BUTTSCORP // BLEAK NARRATIVES &nbsp;◆&nbsp;
+    FIREFLY SCOUTS ACTIVE &nbsp;◆&nbsp; YVETTE INTAKE: ONLINE &nbsp;◆&nbsp;
+    RURAL REVIVE: CHAMPION FILED &nbsp;◆&nbsp; RCB BANK: PITCH READY &nbsp;◆&nbsp;
+    CHEW PLUMBING: YVETTE DEMO STAGED &nbsp;◆&nbsp; COUNTRYSIDE MOTORS: AUTOPILOT ARMED &nbsp;◆&nbsp;
+    CLICK A BOARD MEMBER TO SPEAK PRIVATELY &nbsp;◆&nbsp;
+    DRAG FILES ONTO THE TABLE &nbsp;◆&nbsp; INJECT YOUR BRIEF TO CONVENE &nbsp;◆&nbsp;
+    SESSION: BUTTSCORP &nbsp;◆&nbsp; 2026 &nbsp;◆&nbsp;
+  </div>
+</div>
+
+<!-- THREE.JS CANVAS -->
+<div id="canvas-container"></div>
+
+<!-- HUD -->
+<div id="hud">
+  <div id="hud-top">
+    <div class="hud-brand">VERTICAL AI <span>// THE BOARDROOM</span></div>
+    <div class="hud-stats">
+      MSGS <em id="msg-count">0</em> &nbsp;|&nbsp;
+      AVG TEMP <em id="avg-temp">20°</em> &nbsp;|&nbsp;
+      SESSION <em id="session-id">—</em><br>
+      BRIDGE <em id="bridge-status">OFFLINE</em> &nbsp;|&nbsp;
+      BUTTSCORP &nbsp;◆&nbsp; BLEAK NARRATIVES
+    </div>
+  </div>
+</div>
+
+<!-- SWARM BAR -->
+<div id="swarm-bar">
+  <span class="sw live" id="sw0">SCOUT-01: STANDBY</span>
+  <span class="sw" id="sw1">FIREFLY: ARMED</span>
+  <span class="sw" id="sw2">YVETTE: READY</span>
+  <span class="sw" id="sw3">MOLT: IDLE</span>
+  <span class="sw live" id="sw4">ARENA: ARMED</span>
+  <span class="sw" id="sw5">REAPER: LISTENING</span>
+</div>
+
+<!-- INPUT -->
+<div id="input-area">
+  <div id="controls-row">
+    <button class="ctrl" onclick="toggleTranscript()">TRANSCRIPT</button>
+    <button class="ctrl" onclick="document.getElementById('file-input').click()">UPLOAD</button>
+    <button class="ctrl" onclick="triggerChaos()">☠ CHAOS</button>
+    <button class="ctrl" onclick="clearBoard()">CLEAR</button>
+    <button class="ctrl" onclick="checkBridge()">PING BRIDGE</button>
+    <input type="file" id="file-input" accept=".txt,.json,.md,.csv" onchange="handleFile(event)">
+  </div>
+  <div id="input-row">
+    <div class="prompt-label">►</div>
+    <input id="brief" type="text"
+      placeholder="inject your brief — business idea, target, or problem..."
+      autocomplete="off" spellcheck="false" />
+    <button id="btn-convene" onclick="convene()">CONVENE</button>
+  </div>
+</div>
+
+<!-- TRANSCRIPT -->
+<div id="transcript">
+  <div id="trans-header">
+    TRANSCRIPT
+    <span id="trans-close" onclick="toggleTranscript()">CLOSE</span>
+  </div>
+  <div id="trans-feed">
+    <div class="tm-sys">BOARDROOM ONLINE // AWAITING BRIEF</div>
+  </div>
+</div>
+
+<!-- ONE ON ONE -->
+<div id="oo1">
+  <div id="oo1-header">
+    <div id="oo1-avatar"></div>
+    <div id="oo1-info">
+      <div id="oo1-name"></div>
+      <div id="oo1-title"></div>
+    </div>
+    <div id="oo1-back" onclick="closeOO1()">◄ BOARD</div>
+  </div>
+  <div id="oo1-chat"></div>
+  <div id="oo1-row">
+    <input id="oo1-input" type="text" placeholder="speak directly to this board member..." />
+    <button id="oo1-send" onclick="sendOO1()">SEND</button>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div id="loading">
+  <div id="loading-text">BOARDROOM CONVENING</div>
+  <div id="loading-sub">THE BOARD IS DELIBERATING...</div>
+</div>
+
+<div id="click-hint">CLICK A BOARD MEMBER FOR PRIVATE SESSION</div>
+
+<!-- THREE.JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+const BRIDGE = 'http://127.0.0.1:8767';
+const API_KEY = ''; // direct Anthropic key for standalone mode
+
+// ============================================================
+// AGENT DEFINITIONS
+// ============================================================
+const AGENTS = [
+  {
+    id: 'cfo', name: 'CFO', title: 'CAPITAL EFFICIENCY',
+    color: 0xffb347, colorHex: '#ffb347',
+    face: '($̲_$)', faces: ['($̲_$)','($$)','($!$)','(☉_$)'],
+    tablePos: { x: -2.8, z: -2.2 }, // left back
+    persona: `You are the CFO. Tired of optimism. Numbers only. Attack unit economics, burn rate, ROI. If someone claims without data, call them out. Disagree with CMO reflexively. Max 3 sentences. Start with [CFO].`,
+    simLines: [
+      "[CFO] Without unit economics this is a guess not a strategy. What's the CAC, LTV, payback period?",
+      "[CFO] The burn rate assumption here is fantasy. Show me the model that doesn't require everything going right.",
+      "[CFO] Margins at that price point are razor thin. One bad month and you're underwater.",
+      "[CFO] I've killed better ideas than this because the numbers didn't work.",
+    ]
+  },
+  {
+    id: 'cmo', name: 'CMO', title: 'CUSTOMER PSYCHOLOGY',
+    color: 0x7ac4d4, colorHex: '#7ac4d4',
+    face: '(^‿^)', faces: ['(^‿^)','(^_^)','(*‿*)','(✿◠‿◠)'],
+    tablePos: { x: 2.8, z: -2.2 }, // right back
+    persona: `You are the CMO. Customer above all else. CFO has never talked to a human. Annoyed when marketing is reduced to a cost line. Max 3 sentences. Push back on customer assumptions. Start with [CMO].`,
+    simLines: [
+      "[CMO] Nobody here has actually talked to a customer. We're making assumptions from a spreadsheet.",
+      "[CMO] The CFO wants to optimize a product nobody's bought yet. Get one real customer first.",
+      "[CMO] That CAC assumes they know we exist. Distribution isn't solved and that's the only problem.",
+      "[CMO] You're describing what you want to sell. I'm asking what they actually want to buy.",
+    ]
+  },
+  {
+    id: 'cro', name: 'CRO', title: 'FAILURE MODES',
+    color: 0xcc4433, colorHex: '#cc4433',
+    face: '(>_<)', faces: ['(>_<)','(!_!)','(X_X)','(☠_☠)'],
+    tablePos: { x: -2.2, z: -0.5 }, // left mid
+    persona: `You are the CRO. Find what kills this. Not pessimist — you find the landmine first. Specific: THIS fails because X when Y happens. Max 3 sentences. Name the kill shot. Start with [CRO].`,
+    simLines: [
+      "[CRO] I've seen this exact failure mode. Single supplier dependency kills you on month four.",
+      "[CRO] Legal exposure here is not theoretical. One compliance miss and it all unravels.",
+      "[CRO] The reputational kill shot isn't financial. How do you recover from that specific scenario?",
+      "[CRO] This works until it doesn't and the 'until' is closer than anyone thinks.",
+    ]
+  },
+  {
+    id: 'mkt', name: 'ANALYST', title: 'REAL DATA ONLY',
+    color: 0x8ab870, colorHex: '#8ab870',
+    face: '(o_o)', faces: ['(o_o)','(0_0)','(@_@)','(◉_◉)'],
+    tablePos: { x: 2.2, z: -0.5 }, // right mid
+    persona: `You are the Market Analyst. Only trust citable data. Physically pained by made-up numbers. Correct wrong stats even if it derails things. Max 3 sentences. Context nobody else has. Start with [ANALYST].`,
+    simLines: [
+      "[ANALYST] That market size is wrong. Actual addressable market in this geography is a fraction of that.",
+      "[ANALYST] Timing is the thing nobody's talking about. Three funded players already in this space.",
+      "[ANALYST] Comparable exits in this vertical: 2-3x revenue. The 10x model everyone's running is fiction.",
+      "[ANALYST] The data says the window is 18 months. After that the big players commoditize this.",
+    ]
+  },
+  {
+    id: 'devil', name: 'DEVIL', title: 'PRESSURE TESTING',
+    color: 0xb07ad4, colorHex: '#b07ad4',
+    face: '(>:)', faces: ['(>:)','(>:D)','(😈)','(⊙▂⊙)'],
+    tablePos: { x: 0, z: -2.8 }, // far back center
+    persona: `You are the Devil's Advocate. You actually believe the opposite. Find strongest argument and dismantle it. When everyone agrees, ask what they're missing. Max 3 sentences. Be the most interesting person here. Start with [DEVIL].`,
+    simLines: [
+      "[DEVIL] The CFO's argument is strongest here and I'm going to destroy it. Numbers don't account for network effects at scale.",
+      "[DEVIL] Everyone said market is too small. Wrong. The product framing is too narrow. Expand the aperture.",
+      "[DEVIL] CRO found the landmine. What nobody's saying is that landmine is also the moat.",
+      "[DEVIL] Consensus here is a warning sign. When everyone agrees it's good, ask what you're all missing.",
+    ]
+  },
+];
+
+const CHAIR_SIMS = [
+  { text: "The room agreed there's a real problem worth solving but couldn't agree on this solution. CFO found the numbers thin, CMO found customer assumptions weak, Devil made the case that the biggest risk is the biggest opportunity. This doesn't die — but it needs one more thing before it deserves capital.", verdict: "conditional" },
+  { text: "Nobody could kill this cleanly. CRO tried hardest and came closest but the timing window is real. The market is there, execution risk is real, and the first 90 days are all that matter. Stop modeling. Start moving.", verdict: "go" },
+  { text: "Kill shot landed in round one and nobody recovered. Unit economics don't work at this price point in this market at this scale. Come back with a different wedge or a different market.", verdict: "no-go" },
+];
+
+// ============================================================
+// STATE
+// ============================================================
+const S = {
+  temps: {},
+  msgCount: 0,
+  sessionId: 'vai_' + Math.random().toString(36).substr(2, 8),
+  loading: false,
+  transcriptOpen: false,
+  oo1Agent: null,
+  oo1History: [],
+  uploadedContent: null,
+  boardData: [],
+  bridgeOnline: false,
+  agentMeshes: {},
+  agentHeads: {},
+  agentLabels: {},
+  animQueue: {},
+};
+
+AGENTS.forEach(a => { S.temps[a.id] = 20; S.animQueue[a.id] = null; });
+
+// ============================================================
+// THREE.JS SCENE
+// ============================================================
+let scene, camera, renderer, raycaster, mouse;
+const clock = new THREE.Clock();
+
+function initThree() {
+  const container = document.getElementById('canvas-container');
+
+  // Scene
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0a0704);
+  scene.fog = new THREE.FogExp2(0x0a0704, 0.08);
+
+  // Camera -- seated at head of table, first person
+  camera = new THREE.PerspectiveCamera(65, container.clientWidth / container.clientHeight, 0.1, 100);
+  camera.position.set(0, 1.6, 3.5); // eye height, looking down the table
+  camera.lookAt(0, 1.0, -2);
+
+  // Renderer
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+  renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 0.9;
+  container.appendChild(renderer.domElement);
+
+  // Raycaster for click detection
+  raycaster = new THREE.Raycaster();
+  mouse = new THREE.Vector2();
+
+  buildScene();
+  buildAgents();
+
+  // Events
+  window.addEventListener('resize', onResize);
+  renderer.domElement.addEventListener('click', onSceneClick);
+  renderer.domElement.addEventListener('touchend', onSceneTouch);
+
+  document.addEventListener('dragover', e => e.preventDefault());
+  document.addEventListener('drop', e => {
+    e.preventDefault();
+    const f = e.dataTransfer.files[0];
+    if (f) processFile(f);
+  });
+
+  animate();
+}
+
+function buildScene() {
+  // ── LIGHTING ──
+
+  // Warm overhead pendant -- the boardroom bulb
+  const pendant = new THREE.PointLight(0xffd090, 2.5, 12);
+  pendant.position.set(0, 3.5, -1);
+  pendant.castShadow = true;
+  pendant.shadow.mapSize.width = 1024;
+  pendant.shadow.mapSize.height = 1024;
+  scene.add(pendant);
+
+  // Flicker animation reference
+  S.pendantLight = pendant;
+  S.pendantBase = 2.5;
+
+  // Ambient -- very dim, warm
+  const ambient = new THREE.AmbientLight(0x3a2810, 0.4);
+  scene.add(ambient);
+
+  // Rim light from "window" behind camera
+  const rim = new THREE.DirectionalLight(0x1a2a3a, 0.3);
+  rim.position.set(0, 3, 5);
+  scene.add(rim);
+
+  // ── FLOOR ──
+  const floorGeo = new THREE.PlaneGeometry(20, 20);
+  const floorMat = new THREE.MeshLambertMaterial({ color: 0x0a0804 });
+  const floor = new THREE.Mesh(floorGeo, floorMat);
+  floor.rotation.x = -Math.PI / 2;
+  floor.receiveShadow = true;
+  scene.add(floor);
+
+  // ── WALLS ──
+  const wallMat = new THREE.MeshLambertMaterial({ color: 0x120e08 });
+
+  // Back wall
+  const backWall = new THREE.Mesh(new THREE.PlaneGeometry(12, 5), wallMat);
+  backWall.position.set(0, 2.5, -6);
+  scene.add(backWall);
+
+  // Side walls
+  const sideWall = new THREE.Mesh(new THREE.PlaneGeometry(12, 5), wallMat);
+  sideWall.position.set(-6, 2.5, 0);
+  sideWall.rotation.y = Math.PI / 2;
+  scene.add(sideWall);
+
+  const sideWall2 = sideWall.clone();
+  sideWall2.position.set(6, 2.5, 0);
+  sideWall2.rotation.y = -Math.PI / 2;
+  scene.add(sideWall2);
+
+  // Wall panels / wainscoting
+  buildWainscoting();
+
+  // ── CEILING ──
+  const ceilMat = new THREE.MeshLambertMaterial({ color: 0x080604 });
+  const ceil = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), ceilMat);
+  ceil.rotation.x = Math.PI / 2;
+  ceil.position.set(0, 4, 0);
+  scene.add(ceil);
+
+  // Pendant fixture
+  buildPendant();
+
+  // ── TABLE ──
+  buildTable();
+
+  // ── TABLE OBJECTS ──
+  buildTableObjects();
+}
+
+function buildWainscoting() {
+  const woodMat = new THREE.MeshLambertMaterial({ color: 0x1e1408 });
+  const moldingMat = new THREE.MeshLambertMaterial({ color: 0x2a1e0c });
+
+  // Base panels on back wall
+  for (let x = -4; x <= 4; x += 2) {
+    const panel = new THREE.Mesh(
+      new THREE.BoxGeometry(1.6, 1.2, 0.05),
+      woodMat
+    );
+    panel.position.set(x, 0.7, -5.97);
+    scene.add(panel);
+
+    const border = new THREE.Mesh(
+      new THREE.BoxGeometry(1.7, 1.3, 0.03),
+      moldingMat
+    );
+    border.position.set(x, 0.7, -5.95);
+    scene.add(border);
+  }
+
+  // Chair rail
+  const rail = new THREE.Mesh(
+    new THREE.BoxGeometry(12, 0.06, 0.08),
+    moldingMat
+  );
+  rail.position.set(0, 1.0, -5.93);
+  scene.add(rail);
+}
+
+function buildPendant() {
+  // Ceiling rose
+  const roseMat = new THREE.MeshLambertMaterial({ color: 0x1a1408 });
+  const rose = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.05, 8), roseMat);
+  rose.position.set(0, 3.97, -1);
+  scene.add(rose);
+
+  // Cord
+  const cordMat = new THREE.MeshLambertMaterial({ color: 0x0a0804 });
+  const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.5, 4), cordMat);
+  cord.position.set(0, 3.7, -1);
+  scene.add(cord);
+
+  // Shade
+  const shadeMat = new THREE.MeshLambertMaterial({
+    color: 0x8a6020,
+    emissive: 0x4a3010,
+    emissiveIntensity: 0.3,
+    side: THREE.DoubleSide
+  });
+  const shade = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.3, 8, 1, true), shadeMat);
+  shade.position.set(0, 3.35, -1);
+  shade.rotation.x = Math.PI;
+  scene.add(shade);
+
+  // Bulb glow
+  const bulbMat = new THREE.MeshBasicMaterial({ color: 0xffd090 });
+  const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 6), bulbMat);
+  bulb.position.set(0, 3.42, -1);
+  scene.add(bulb);
+  S.bulb = bulb;
+}
+
+function buildTable() {
+  // Main table surface
+  const tableMat = new THREE.MeshLambertMaterial({ color: 0x1e1408 });
+  const tableTop = new THREE.Mesh(
+    new THREE.BoxGeometry(5.5, 0.1, 6),
+    tableMat
+  );
+  tableTop.position.set(0, 0.85, -1.5);
+  tableTop.receiveShadow = true;
+  scene.add(tableTop);
+  S.tableTop = tableTop;
+
+  // Felt surface
+  const feltMat = new THREE.MeshLambertMaterial({ color: 0x0e2010 });
+  const felt = new THREE.Mesh(
+    new THREE.BoxGeometry(5.2, 0.01, 5.7),
+    feltMat
+  );
+  felt.position.set(0, 0.91, -1.5);
+  scene.add(felt);
+
+  // Table edge molding
+  const edgeMat = new THREE.MeshLambertMaterial({ color: 0x2a1c0a });
+  const edgeFront = new THREE.Mesh(new THREE.BoxGeometry(5.5, 0.15, 0.08), edgeMat);
+  edgeFront.position.set(0, 0.85, 1.5);
+  scene.add(edgeFront);
+
+  const edgeBack = edgeFront.clone();
+  edgeBack.position.set(0, 0.85, -4.5);
+  scene.add(edgeBack);
+
+  // Table legs
+  const legMat = new THREE.MeshLambertMaterial({ color: 0x1a1008 });
+  [[-2.4, -4.0], [2.4, -4.0], [-2.4, 1.2], [2.4, 1.2]].forEach(([x, z]) => {
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.85, 0.12), legMat);
+    leg.position.set(x, 0.425, z);
+    scene.add(leg);
+  });
+
+  // Reflection/sheen on table
+  const sheenMat = new THREE.MeshBasicMaterial({
+    color: 0x4a3010,
+    transparent: true,
+    opacity: 0.08,
+  });
+  const sheen = new THREE.Mesh(new THREE.BoxGeometry(5.0, 0.001, 5.5), sheenMat);
+  sheen.position.set(0, 0.92, -1.5);
+  scene.add(sheen);
+}
+
+function buildTableObjects() {
+  // Paper stacks, tablets, coffee on the table
+  const paperMat = new THREE.MeshLambertMaterial({ color: 0xd4b870 });
+  const tabletMat = new THREE.MeshLambertMaterial({ color: 0x0a0a14 });
+  const screenMat = new THREE.MeshLambertMaterial({ color: 0x1a3a6a, emissive: 0x0a2040 });
+
+  const objects = [
+    { pos: [-1.8, 0.93, 0.2], type: 'paper', rot: 0.2 },
+    { pos: [1.6,  0.93, 0.3], type: 'paper', rot: -0.15 },
+    { pos: [-0.4, 0.93, -0.3], type: 'tablet', rot: 0.05 },
+    { pos: [0.6,  0.93, 0.1], type: 'paper', rot: -0.3 },
+    { pos: [0,    0.93, -1.5], type: 'tablet', rot: 0.0 },
+    { pos: [-2.0, 0.93, -1.0], type: 'cup', rot: 0 },
+    { pos: [2.1,  0.93, -1.2], type: 'cup', rot: 0 },
+  ];
+
+  objects.forEach((obj, i) => {
+    let mesh;
+    if (obj.type === 'paper') {
+      const stack = new THREE.Group();
+      for (let s = 0; s < 4; s++) {
+        const sheet = new THREE.Mesh(
+          new THREE.BoxGeometry(0.22, 0.005, 0.28),
+          new THREE.MeshLambertMaterial({ color: 0xc8a860 - s * 0x050200 })
+        );
+        sheet.position.y = s * 0.006;
+        sheet.rotation.y = (Math.random() - 0.5) * 0.1;
+        stack.add(sheet);
+      }
+      stack.position.set(...obj.pos);
+      stack.rotation.y = obj.rot;
+      stack.userData = { type: 'object', label: 'REPORTS', agentId: null };
+      scene.add(stack);
+      S.agentMeshes[`obj_${i}`] = stack;
+
+    } else if (obj.type === 'tablet') {
+      const tablet = new THREE.Group();
+      const body = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.018, 0.2), tabletMat);
+      tablet.add(body);
+      const screen = new THREE.Mesh(
+        new THREE.BoxGeometry(0.24, 0.002, 0.16),
+        new THREE.MeshBasicMaterial({ color: 0x1a4a8a })
+      );
+      screen.position.y = 0.011;
+      tablet.add(screen);
+      tablet.position.set(...obj.pos);
+      tablet.rotation.y = obj.rot;
+      tablet.userData = { type: 'object', label: 'DATA', agentId: null };
+      scene.add(tablet);
+      S.agentMeshes[`obj_${i}`] = tablet;
+
+    } else if (obj.type === 'cup') {
+      const cup = new THREE.Group();
+      const body = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.04, 0.035, 0.09, 8),
+        new THREE.MeshLambertMaterial({ color: 0x2a1808 })
+      );
+      cup.add(body);
+      const liquid = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.036, 0.036, 0.01, 8),
+        new THREE.MeshBasicMaterial({ color: 0x1a0e04 })
+      );
+      liquid.position.y = 0.042;
+      cup.add(liquid);
+      cup.position.set(...obj.pos);
+      cup.userData = { type: 'object', label: 'COFFEE', agentId: null };
+      scene.add(cup);
+    }
+  });
+}
+
+function buildAgents() {
+  AGENTS.forEach(agent => {
+    const group = new THREE.Group();
+    group.position.set(agent.tablePos.x, 0.92, agent.tablePos.z);
+    group.userData = { agentId: agent.id, type: 'agent' };
+
+    // Chair
+    const chairMat = new THREE.MeshLambertMaterial({ color: 0x1a1008 });
+    const seatGeo = new THREE.BoxGeometry(0.55, 0.06, 0.5);
+    const seat = new THREE.Mesh(seatGeo, chairMat);
+    seat.position.set(0, -0.45, 0.35);
+    group.add(seat);
+
+    const backGeo = new THREE.BoxGeometry(0.52, 0.7, 0.05);
+    const back = new THREE.Mesh(backGeo, chairMat);
+    back.position.set(0, -0.12, 0.6);
+    group.add(back);
+
+    // Body / torso
+    const bodyMat = new THREE.MeshLambertMaterial({ color: 0x1a1a2a });
+    const body = new THREE.Mesh(
+      new THREE.BoxGeometry(0.4, 0.5, 0.25),
+      bodyMat
+    );
+    body.position.set(0, -0.05, 0.1);
+    group.add(body);
+
+    // Suit lapels
+    const lapelMat = new THREE.MeshLambertMaterial({ color: 0x101018 });
+    const lapelL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.3, 0.26), lapelMat);
+    lapelL.position.set(-0.1, 0.02, 0.12);
+    lapelL.rotation.z = 0.15;
+    group.add(lapelL);
+    const lapelR = lapelL.clone();
+    lapelR.position.set(0.1, 0.02, 0.12);
+    lapelR.rotation.z = -0.15;
+    group.add(lapelR);
+
+    // Neck
+    const neckMat = new THREE.MeshLambertMaterial({ color: 0xc4946a });
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.08, 0.15, 8), neckMat);
+    neck.position.set(0, 0.28, 0.05);
+    group.add(neck);
+
+    // HEAD -- billboard sprite with VT323 text drawn to canvas
+    const headCanvas = document.createElement('canvas');
+    headCanvas.width = 128;
+    headCanvas.height = 128;
+    const ctx = headCanvas.getContext('2d');
+
+    // Draw head
+    drawHead(ctx, agent, headCanvas.width, headCanvas.height, 'normal');
+
+    const headTex = new THREE.CanvasTexture(headCanvas);
+    const headMat = new THREE.SpriteMaterial({
+      map: headTex,
+      transparent: true,
+      depthWrite: false,
+    });
+    const headSprite = new THREE.Sprite(headMat);
+    headSprite.scale.set(0.6, 0.6, 0.6);
+    headSprite.position.set(0, 0.65, 0.05);
+    headSprite.userData = { agentId: agent.id, type: 'agent', canvas: headCanvas, ctx, agent };
+    group.add(headSprite);
+
+    S.agentHeads[agent.id] = { sprite: headSprite, canvas: headCanvas, ctx };
+
+    // Nameplate on table
+    const nameCanvas = document.createElement('canvas');
+    nameCanvas.width = 256;
+    nameCanvas.height = 48;
+    const nctx = nameCanvas.getContext('2d');
+    nctx.fillStyle = '#1a1408';
+    nctx.fillRect(0, 0, 256, 48);
+    nctx.strokeStyle = agent.colorHex;
+    nctx.strokeRect(1, 1, 254, 46);
+    nctx.fillStyle = agent.colorHex;
+    nctx.font = 'bold 22px "Courier New"';
+    nctx.textAlign = 'center';
+    nctx.textBaseline = 'middle';
+    nctx.fillText(agent.name, 128, 24);
+
+    const nameTex = new THREE.CanvasTexture(nameCanvas);
+    const nameMat = new THREE.SpriteMaterial({ map: nameTex, transparent: true, depthWrite: false });
+    const nameSprite = new THREE.Sprite(nameMat);
+    nameSprite.scale.set(0.5, 0.1, 0.1);
+    nameSprite.position.set(0, -0.1, 0.0);
+    nameSprite.userData = { agentId: agent.id, type: 'agent' };
+    group.add(nameSprite);
+
+    S.agentMeshes[agent.id] = group;
+    scene.add(group);
+  });
+}
+
+function drawHead(ctx, agent, w, h, state) {
+  ctx.clearRect(0, 0, w, h);
+
+  // Background circle
+  const grad = ctx.createRadialGradient(w/2, h/2-5, 5, w/2, h/2-5, w/2-8);
+  grad.addColorStop(0, '#2a1e10');
+  grad.addColorStop(1, '#0a0804');
+  ctx.beginPath();
+  ctx.arc(w/2, h/2-5, w/2-10, 0, Math.PI*2);
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Border
+  ctx.strokeStyle = agent.colorHex;
+  ctx.lineWidth = state === 'speaking' ? 4 : 2;
+  ctx.stroke();
+
+  // Glow on speak
+  if (state === 'speaking') {
+    ctx.shadowColor = agent.colorHex;
+    ctx.shadowBlur = 15;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  // Face text
+  const faceIdx = state === 'angry' ? 2 : state === 'speaking' ? 1 : 0;
+  const faceStr = agent.faces[faceIdx % agent.faces.length];
+
+  ctx.fillStyle = agent.colorHex;
+  ctx.font = `${Math.round(w * 0.28)}px "Courier New"`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  if (state === 'speaking') {
+    ctx.shadowColor = agent.colorHex;
+    ctx.shadowBlur = 8;
+  }
+
+  ctx.fillText(faceStr, w/2, h/2 - 4);
+  ctx.shadowBlur = 0;
+
+  // Title text
+  ctx.fillStyle = 'rgba(200,160,80,0.5)';
+  ctx.font = `${Math.round(w * 0.09)}px "Courier New"`;
+  ctx.fillText(agent.title.substring(0, 14), w/2, h - 16);
+}
+
+function updateAgentHead(agentId, state) {
+  const head = S.agentHeads[agentId];
+  const agent = AGENTS.find(a => a.id === agentId);
+  if (!head || !agent) return;
+
+  drawHead(head.ctx, agent, head.canvas.width, head.canvas.height, state);
+  head.sprite.material.map.needsUpdate = true;
+}
+
+// ============================================================
+// ANIMATION LOOP
+// ============================================================
+function animate() {
+  requestAnimationFrame(animate);
+  const t = clock.getElapsedTime();
+
+  // Pendant flicker
+  if (S.pendantLight) {
+    const flicker = Math.sin(t * 0.7) * 0.05 + Math.sin(t * 13) * 0.02;
+    S.pendantLight.intensity = S.pendantBase + flicker;
+    if (S.bulb) S.bulb.material.color.setHex(flicker > 0 ? 0xffd090 : 0xffb860);
+  }
+
+  // Agent idle animations -- subtle float and sway
+  AGENTS.forEach((agent, i) => {
+    const group = S.agentMeshes[agent.id];
+    if (!group) return;
+    const phase = i * 1.3;
+    // Gentle breathing bob
+    group.position.y = 0.92 + Math.sin(t * 0.8 + phase) * 0.008;
+    // Subtle lean
+    group.rotation.z = Math.sin(t * 0.4 + phase) * 0.015;
+    // Head follows camera loosely
+    const head = S.agentHeads[agent.id];
+    if (head) {
+      const dx = camera.position.x - group.position.x;
+      const dz = camera.position.z - group.position.z;
+      group.rotation.y = Math.atan2(dx, dz) * 0.3; // partial billboard
+    }
+  });
+
+  renderer.render(scene, camera);
+}
+
+// ============================================================
+// CLICK HANDLING
+// ============================================================
+function onSceneClick(event) {
+  if (S.loading) return;
+  const rect = renderer.domElement.getBoundingClientRect();
+  mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+  checkIntersect();
+}
+
+function onSceneTouch(event) {
+  if (S.loading) return;
+  const rect = renderer.domElement.getBoundingClientRect();
+  const touch = event.changedTouches[0];
+  mouse.x = ((touch.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((touch.clientY - rect.top) / rect.height) * 2 + 1;
+  checkIntersect();
+}
+
+function checkIntersect() {
+  raycaster.setFromCamera(mouse, camera);
+  const meshList = [];
+  AGENTS.forEach(a => {
+    const g = S.agentMeshes[a.id];
+    if (g) g.traverse(c => { if (c.isMesh || c.isSprite) meshList.push(c); });
+  });
+
+  const hits = raycaster.intersectObjects(meshList, false);
+  if (hits.length > 0) {
+    let obj = hits[0].object;
+    while (obj && !obj.userData.agentId) obj = obj.parent;
+    if (obj && obj.userData.agentId) {
+      const agent = AGENTS.find(a => a.id === obj.userData.agentId);
+      if (agent) openOO1(agent);
+    }
+  }
+}
+
+function onResize() {
+  const container = document.getElementById('canvas-container');
+  camera.aspect = container.clientWidth / container.clientHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(container.clientWidth, container.clientHeight);
+}
+
+// ============================================================
+// TRANSCRIPT
+// ============================================================
+function addMsg(who, text, colorHex, type) {
+  const feed = document.getElementById('trans-feed');
+  const el = document.createElement('div');
+
+  if (type === 'sys') {
+    el.className = 'tm-sys';
+    el.textContent = text;
+  } else if (type === 'verdict') {
+    el.className = 'tm-verdict';
+    const col = text.toLowerCase().includes('no') ? '#cc4433' :
+                text.toLowerCase().includes('cond') ? '#ffb347' : '#8ab870';
+    el.style.color = col;
+    el.style.borderColor = col;
+    el.textContent = 'VERDICT: ' + text.toUpperCase();
+  } else {
+    el.className = 'tm';
+    el.innerHTML = `
+      <div class="tm-who" style="color:${colorHex}">${who}</div>
+      <div class="tm-text">${text}</div>
+    `;
+  }
+
+  feed.appendChild(el);
+  feed.scrollTop = feed.scrollHeight;
+  S.msgCount++;
+  document.getElementById('msg-count').textContent = S.msgCount;
+}
+
+function toggleTranscript() {
+  S.transcriptOpen = !S.transcriptOpen;
+  document.getElementById('transcript').classList.toggle('open', S.transcriptOpen);
+}
+
+// ============================================================
+// CONVENE
+// ============================================================
+async function convene() {
+  const input = document.getElementById('brief');
+  let text = input.value.trim();
+
+  if (S.uploadedContent) {
+    text = (text ? text + '\n\nFILE CONTEXT:\n' : 'FILE CONTEXT:\n') + S.uploadedContent;
+    S.uploadedContent = null;
+  }
+
+  if (!text || S.loading) return;
+  input.value = '';
+  S.loading = true;
+  document.getElementById('btn-convene').disabled = true;
+  document.getElementById('loading').classList.add('show');
+
+  if (!S.transcriptOpen) toggleTranscript();
+
+  addMsg('', `BRIEF: "${text.substring(0, 80)}${text.length > 80 ? '...' : ''}"`, '', 'sys');
+  AGENTS.forEach(a => updateTemp(a.id, Math.random() * 12 + 8));
+
+  // Try bridge first, then direct API, then simulation
+  if (S.bridgeOnline) {
+    await runViaBridge(text);
+  } else if (API_KEY) {
+    await runDirect(text);
+  } else {
+    await runSimulation(text);
+  }
+
+  S.loading = false;
+  document.getElementById('btn-convene').disabled = false;
+  document.getElementById('loading').classList.remove('show');
+}
+
+// ============================================================
+// BRIDGE MODE
+// ============================================================
+async function runViaBridge(brief) {
+  addMsg('', 'ROUTING TO CLI BACKEND...', '', 'sys');
+  document.getElementById('loading-sub').textContent = 'RUNNING VERTICAL AI CLI...';
+
+  try {
+    const res = await fetch(`${BRIDGE}/convene`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ brief, rounds: 1, tracks: 2, iterations: 2 }),
+    });
+
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    // Parse boardroom output
+    const debate = data.boardroom?.debate || [];
+    const synthesis = data.boardroom?.synthesis || {};
+    const champion = data.champion || {};
+
+    debate.forEach(entry => {
+      if (!entry.argument.startsWith('FAILED')) {
+        const agent = AGENTS.find(a => a.name === entry.agent);
+        const color = agent?.colorHex || '#e8d5a0';
+        addMsg(entry.agent, entry.argument, color, 'msg');
+        if (agent) {
+          updateAgentHead(agent.id, 'speaking');
+          updateTemp(agent.id, 10);
+          setTimeout(() => updateAgentHead(agent.id, 'normal'), 2000);
+        }
+      }
+    });
+
+    if (synthesis.verdict) {
+      const chairText = synthesis.consensus || synthesis.error || 'Board has deliberated.';
+      addMsg('CHAIRMAN', chairText, '#ffdd88', 'msg');
+      addMsg('', synthesis.verdict, '', 'verdict');
+
+      AGENTS.forEach((a, i) => {
+        setTimeout(() => {
+          const type = synthesis.verdict === 'no-go' ? 'angry' : 'speaking';
+          updateAgentHead(a.id, type);
+          setTimeout(() => updateAgentHead(a.id, 'normal'), 1500);
+        }, i * 150);
+      });
+    }
+
+    if (champion.name) {
+      addMsg('', `CHAMPION: ${champion.name} — ${champion.thesis || ''}`, '#8ab870', 'sys');
+    }
+
+  } catch(e) {
+    addMsg('', `BRIDGE ERROR: ${e.message}`, '#cc4433', 'sys');
+    addMsg('', 'FALLING BACK TO SIMULATION', '', 'sys');
+    await runSimulation(brief);
+  }
+}
+
+// ============================================================
+// DIRECT CLAUDE API
+// ============================================================
+async function runDirect(brief) {
+  addMsg('', 'BOARDROOM CONVENING // CLAUDE API', '', 'sys');
+  S.boardData = [];
+
+  const shuffled = [...AGENTS].sort(() => Math.random() - 0.5);
+
+  for (const agent of shuffled) {
+    updateAgentHead(agent.id, 'speaking');
+    updateTemp(agent.id, Math.random() * 20 + 10);
+    document.getElementById('loading-sub').textContent = `${agent.name} DELIBERATING...`;
+
+    try {
+      const prior = S.boardData.slice(-2).map(r => `${r.name}: ${r.text.substring(0,150)}`).join('\n');
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': API_KEY,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 250,
+          system: agent.persona,
+          messages: [{ role: 'user', content: `BRIEF: ${brief}\n\nPRIOR:\n${prior || 'You are first.'}` }],
+        }),
+      });
+      const data = await res.json();
+      const text = data.content?.[0]?.text || '[no response]';
+      addMsg(agent.name, text, agent.colorHex, 'msg');
+      S.boardData.push({ name: agent.name, text });
+      updateTemp(agent.id, 8);
+    } catch(e) {
+      addMsg(agent.name, `[ERROR]`, agent.colorHex, 'msg');
+    }
+
+    setTimeout(() => updateAgentHead(agent.id, 'normal'), 1800);
+    await sleep(400);
+  }
+
+  // Chairman
+  document.getElementById('loading-sub').textContent = 'CHAIRMAN DELIBERATING...';
+  try {
+    const debate = S.boardData.map(r => `${r.name}: ${r.text}`).join('\n\n');
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': API_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 250,
+        messages: [{ role: 'user', content: `DEBATE:\n${debate}\n\nBRIEF: ${brief}\n\n2-3 sentences verdict. End with: VERDICT: go OR VERDICT: no-go OR VERDICT: conditional` }],
+      }),
+    });
+    const data = await res.json();
+    const raw = data.content?.[0]?.text || '';
+    const vLine = raw.split('\n').find(l => l.toUpperCase().includes('VERDICT:'));
+    const verdict = vLine ? vLine.replace(/VERDICT:/i,'').trim() : 'conditional';
+    const stmt = raw.split('\n').filter(l => !l.toUpperCase().includes('VERDICT:')).join(' ').trim();
+    addMsg('CHAIRMAN', stmt, '#ffdd88', 'msg');
+    addMsg('', verdict, '', 'verdict');
+    AGENTS.forEach((a,i) => {
+      setTimeout(() => {
+        updateAgentHead(a.id, verdict === 'no-go' ? 'angry' : 'speaking');
+        setTimeout(() => updateAgentHead(a.id, 'normal'), 1500);
+      }, i*120);
+    });
+  } catch(e) {
+    addMsg('CHAIRMAN', 'Board deadlocked.', '#ffdd88', 'msg');
+    addMsg('', 'conditional', '', 'verdict');
+  }
+}
+
+// ============================================================
+// SIMULATION
+// ============================================================
+async function runSimulation(brief) {
+  addMsg('', 'SIMULATION MODE // ADD API KEY OR START BRIDGE FOR LIVE', '', 'sys');
+  S.boardData = [];
+
+  const shuffled = [...AGENTS].sort(() => Math.random() - 0.5);
+
+  for (const agent of shuffled) {
+    updateAgentHead(agent.id, 'speaking');
+    updateTemp(agent.id, Math.random() * 22 + 12);
+    document.getElementById('loading-sub').textContent = `${agent.name} DELIBERATING...`;
+
+    await sleep(Math.random() * 400 + 250);
+
+    const text = agent.simLines[Math.floor(Math.random() * agent.simLines.length)];
+    addMsg(agent.name, text, agent.colorHex, 'msg');
+    S.boardData.push({ name: agent.name, text });
+    updateTemp(agent.id, 8);
+
+    setTimeout(() => updateAgentHead(agent.id, 'normal'), 1500);
+    await sleep(250);
+  }
+
+  document.getElementById('loading-sub').textContent = 'CHAIRMAN DELIBERATING...';
+  await sleep(600);
+
+  const chair = CHAIR_SIMS[Math.floor(Math.random() * CHAIR_SIMS.length)];
+  addMsg('CHAIRMAN', chair.text, '#ffdd88', 'msg');
+  addMsg('', chair.verdict, '', 'verdict');
+
+  AGENTS.forEach((a, i) => {
+    setTimeout(() => {
+      updateAgentHead(a.id, chair.verdict === 'no-go' ? 'angry' : 'speaking');
+      setTimeout(() => updateAgentHead(a.id, 'normal'), 1500);
+    }, i * 120);
+  });
+}
+
+// ============================================================
+// TEMP
+// ============================================================
+function updateTemp(agentId, delta) {
+  S.temps[agentId] = Math.min(100, Math.max(0, (S.temps[agentId] || 20) + delta));
+  const avg = Math.round(Object.values(S.temps).reduce((a,b) => a+b,0) / AGENTS.length);
+  document.getElementById('avg-temp').textContent = avg + '°';
+}
+
+// ============================================================
+// ONE ON ONE
+// ============================================================
+function openOO1(agent) {
+  S.oo1Agent = agent;
+  S.oo1History = [];
+
+  const oo1 = document.getElementById('oo1');
+  oo1.style.setProperty('--oo1-color', agent.colorHex);
+  oo1.classList.add('open');
+
+  document.getElementById('oo1-avatar').textContent = agent.face;
+  document.getElementById('oo1-avatar').style.color = agent.colorHex;
+  document.getElementById('oo1-name').textContent = agent.name;
+  document.getElementById('oo1-name').style.color = agent.colorHex;
+  document.getElementById('oo1-title').textContent = agent.title;
+
+  const chat = document.getElementById('oo1-chat');
+  chat.innerHTML = '';
+
+  const intro = document.createElement('div');
+  intro.className = 'oo1m agent';
+  intro.style.borderColor = agent.colorHex;
+  intro.textContent = agent.simLines[0];
+  chat.appendChild(intro);
+
+  document.getElementById('oo1-input').focus();
+  updateAgentHead(agent.id, 'speaking');
+  setTimeout(() => updateAgentHead(agent.id, 'normal'), 2000);
+}
+
+function closeOO1() {
+  document.getElementById('oo1').classList.remove('open');
+  S.oo1Agent = null;
+}
+
+async function sendOO1() {
+  const input = document.getElementById('oo1-input');
+  const text = input.value.trim();
+  if (!text || !S.oo1Agent) return;
+  input.value = '';
+
+  const chat = document.getElementById('oo1-chat');
+  const agent = S.oo1Agent;
+
+  const userMsg = document.createElement('div');
+  userMsg.className = 'oo1m user';
+  userMsg.textContent = text;
+  chat.appendChild(userMsg);
+  chat.scrollTop = chat.scrollHeight;
+
+  S.oo1History.push({ role: 'user', content: text });
+  updateAgentHead(agent.id, 'speaking');
+
+  if (!API_KEY) {
+    await sleep(500);
+    const line = agent.simLines[Math.floor(Math.random() * agent.simLines.length)];
+    const msg = document.createElement('div');
+    msg.className = 'oo1m agent';
+    msg.style.borderColor = agent.colorHex;
+    msg.textContent = line;
+    chat.appendChild(msg);
+    chat.scrollTop = chat.scrollHeight;
+    setTimeout(() => updateAgentHead(agent.id, 'normal'), 1500);
+    return;
+  }
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': API_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 300,
+        system: agent.persona + '\n\nOne-on-one conversation. Be direct and in character.',
+        messages: S.oo1History,
+      }),
+    });
+    const data = await res.json();
+    const reply = data.content?.[0]?.text || '[no response]';
+    S.oo1History.push({ role: 'assistant', content: reply });
+    const msg = document.createElement('div');
+    msg.className = 'oo1m agent';
+    msg.style.borderColor = agent.colorHex;
+    msg.textContent = reply;
+    chat.appendChild(msg);
+    chat.scrollTop = chat.scrollHeight;
+  } catch(e) {
+    const msg = document.createElement('div');
+    msg.className = 'oo1m agent';
+    msg.style.borderColor = '#cc4433';
+    msg.textContent = `[ERROR: ${e.message}]`;
+    chat.appendChild(msg);
+  }
+
+  setTimeout(() => updateAgentHead(agent.id, 'normal'), 1500);
+}
+
+// ============================================================
+// FILE UPLOAD
+// ============================================================
+function handleFile(event) {
+  const file = event.target.files[0];
+  if (file) processFile(file);
+  event.target.value = '';
+}
+
+function processFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    let content = e.target.result;
+    if (typeof content !== 'string') content = `[Binary file: ${file.name}]`;
+    if (content.length > 10000) content = content.substring(0, 10000) + '\n...[truncated]';
+    S.uploadedContent = content;
+    addMsg('', `FILE STAGED: ${file.name} (${Math.round(content.length/1024*10)/10}kb)`, '#8ab870', 'sys');
+    if (!S.transcriptOpen) toggleTranscript();
+  };
+  reader.readAsText(file);
+}
+
+// ============================================================
+// CHAOS
+// ============================================================
+function triggerChaos() {
+  addMsg('', 'CHAOS PROTOCOL ENGAGED', '', 'sys');
+  AGENTS.forEach((a, i) => {
+    setTimeout(() => {
+      updateTemp(a.id, 30);
+      updateAgentHead(a.id, 'angry');
+      const shouts = ["EVERYTHING IS ON FIRE","THE MOAT IS AN ILLUSION","SHIP IT OR KILL IT","DATA OR SILENCE","THIS IS THE WAY"];
+      addMsg(a.name, shouts[i] || 'BREACH', a.colorHex, 'msg');
+      setTimeout(() => updateAgentHead(a.id, 'normal'), 2000);
+    }, i * 100);
+  });
+  if (!S.transcriptOpen) toggleTranscript();
+}
+
+function clearBoard() {
+  document.getElementById('trans-feed').innerHTML = '<div class="tm-sys">FEED CLEARED</div>';
+  S.msgCount = 0;
+  S.boardData = [];
+  document.getElementById('msg-count').textContent = '0';
+  AGENTS.forEach(a => {
+    S.temps[a.id] = 20;
+    updateAgentHead(a.id, 'normal');
+  });
+  document.getElementById('avg-temp').textContent = '20°';
+}
+
+// ============================================================
+// BRIDGE CHECK
+// ============================================================
+async function checkBridge() {
+  try {
+    const res = await fetch(`${BRIDGE}/status`, { signal: AbortSignal.timeout(2000) });
+    const data = await res.json();
+    if (data.status === 'online') {
+      S.bridgeOnline = true;
+      document.getElementById('bridge-status').textContent = 'ONLINE';
+      document.getElementById('bridge-status').style.color = '#8ab870';
+      addMsg('', 'BRIDGE CONNECTED // CLI BACKEND ACTIVE', '#8ab870', 'sys');
+      if (!S.transcriptOpen) toggleTranscript();
+    }
+  } catch(e) {
+    S.bridgeOnline = false;
+    document.getElementById('bridge-status').textContent = 'OFFLINE';
+    document.getElementById('bridge-status').style.color = '#cc4433';
+  }
+}
+
+// ============================================================
+// SWARM
+// ============================================================
+const SWARM = [
+  ['SCOUT-01: 847 signals','live'],['FIREFLY: lead found','live'],
+  ['YVETTE: call triaged','live'],['MOLT: mutation staged',''],
+  ['ARENA: fitness 65','live'],['FIREFLY: Wellington KS','live'],
+  ['YVETTE: Chew Plumbing','alert'],['REAPER: 2.1k LOC',''],
+  ['RURAL REVIVE: champion','live'],['RCB BANK: pitch ready',''],
+];
+
+function startSwarm() {
+  setInterval(() => {
+    const ids = ['sw0','sw1','sw2','sw3','sw4','sw5'];
+    const id = ids[Math.floor(Math.random()*ids.length)];
+    const [msg, cls] = SWARM[Math.floor(Math.random()*SWARM.length)];
+    const el = document.getElementById(id);
+    if (el) { el.textContent = msg; el.className = 'sw' + (cls?' '+cls:''); }
+  }, 2200);
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ============================================================
+// INPUT HANDLERS
+// ============================================================
+document.getElementById('brief').addEventListener('keydown', e => {
+  if (e.key === 'Enter') convene();
+});
+document.getElementById('oo1-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') sendOO1();
+});
+
+// ============================================================
+// BOOT
+// ============================================================
+window.addEventListener('load', () => {
+  document.getElementById('session-id').textContent =
+    'vai_' + Math.random().toString(36).substr(2,8).slice(-6);
+
+  initThree();
+  startSwarm();
+
+  // Temp decay
+  setInterval(() => {
+    AGENTS.forEach(a => {
+      if (S.temps[a.id] > 20) updateTemp(a.id, -0.4);
+    });
+  }, 1000);
+
+  // Auto-ping bridge
+  setTimeout(checkBridge, 1000);
+  setInterval(checkBridge, 30000);
+});
+</script>
+</body>
+</html>

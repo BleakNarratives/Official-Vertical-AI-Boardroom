@@ -1,0 +1,257 @@
+FIREFLY TARGET REPORT -- Wellington KS
+Generated: 2026-05-31T18:56:50.981157
+Targets found: 8
+
+
+============================================================
+TARGET: Fabiola's Mexican Restaurant
+VIABILITY SCORE: 100/100
+============================================================
+Location:  Fabiola's Mexican Restaurant, West 8th Street, Wellington, S
+Phone:     N/A
+Website:   None found
+Category:  restaurant
+Rating:    4.0 stars (100 reviews)
+
+WHY THEY'RE A TARGET:
+  + Rating 4.0 -- motivated to improve
+  + 100 reviews -- established but not corporate
+  + No website -- immediate digital opportunity
+  + High-value vertical: restaurant
+
+WATCH OUTS:
+  None identified
+
+RECOMMENDED PRODUCT: Restaurant AI Assistant
+SUGGESTED PRICE POINT: $149-299/month
+PITCH ANGLE: Growth tool for a winning operation
+
+OPENING LINE:
+"I noticed Fabiola's Mexican Restaurant has 4.0 stars and 100 reviews --
+you're clearly doing something right. I built a system that
+helps businesses like yours stop losing time to tire kickers
+and unqualified leads. Takes 10 minutes to show you."
+
+BOARDROOM SESSION: Run with --vertical restaurant
+============================================================
+
+============================================================
+TARGET: The Big Cheese Pizza
+VIABILITY SCORE: 100/100
+============================================================
+Location:  The Big Cheese Pizza, West 9th Street, Wellington, Sumner Co
+Phone:     N/A
+Website:   None found
+Category:  restaurant
+Rating:    4.0 stars (100 reviews)
+
+WHY THEY'RE A TARGET:
+  + Rating 4.0 -- motivated to improve
+  + 100 reviews -- established but not corporate
+  + No website -- immediate digital opportunity
+  + High-value vertical: restaurant
+
+WATCH OUTS:
+  None identified
+
+RECOMMENDED PRODUCT: Restaurant AI Assistant
+SUGGESTED PRICE POINT: $149-299/month
+PITCH ANGLE: Growth tool for a winning operation
+
+OPENING LINE:
+"I noticed The Big Cheese Pizza has 4.0 stars and 100 reviews --
+you're clearly doing something right. I built a system that
+helps businesses like yours stop losing time to tire kickers
+and unqualified leads. Takes 10 minutes to show you."
+
+BOARDROOM SESSION: Run with --vertical restaurant
+============================================================
+
+============================================================
+TARGET: Pizza Hut
+VIABILITY SCORE: 100/100
+============================================================
+Location:  Pizza Hut, West 14th Street, Wellington, Sumner County, Kans
+Phone:     N/A
+Website:   None found
+Category:  restaurant
+Rating:    4.0 stars (100 reviews)
+
+WHY THEY'RE A TARGET:
+  + Rating 4.0 -- motivated to improve
+  + 100 reviews -- established but not corporate
+  + No website -- immediate digital opportunity
+  + High-value vertical: restaurant
+
+WATCH OUTS:
+  None identified
+
+RECOMMENDED PRODUCT: Restaurant AI Assistant
+SUGGESTED PRICE POINT: $149-299/month
+PITCH ANGLE: Growth tool for a winning operation
+
+OPENING LINE:
+"I noticed Pizza Hut has 4.0 stars and 100 reviews --
+you're clearly doing something right. I built a system that
+helps businesses like yours stop losing time to tire kickers
+and unqualified leads. Takes 10 minutes to show you."
+
+BOARDROOM SESSION: Run with --vertical restaurant
+============================================================
+
+============================================================
+TARGET: Canelo's Mexican Grill & Bar
+VIABILITY SCORE: 100/100
+============================================================
+Location:  Canelo's Mexican Grill & Bar, East 16th Street, Wellington, 
+Phone:     N/A
+Website:   None found
+Category:  restaurant
+Rating:    4.0 stars (100 reviews)
+
+WHY THEY'RE A TARGET:
+  + Rating 4.0 -- motivated to improve
+  + 100 reviews -- established but not corporate
+  + No website -- immediate digital opportunity
+  + High-value vertical: restaurant
+
+WATCH OUTS:
+  None identified
+
+RECOMMENDED PRODUCT: Restaurant AI Assistant
+SUGGESTED PRICE POINT: $149-299/month
+PITCH ANGLE: Growth tool for a winning operation
+
+OPENING LINE:
+"I noticed Canelo's Mexican Grill & Bar has 4.0 stars and 100 reviews --
+you're clearly doing something right. I built a system that
+helps businesses like yours stop losing time to tire kickers
+and unqualified leads. Takes 10 minutes to show you."
+
+BOARDROOM SESSION: Run with --vertical restaurant
+============================================================
+
+============================================================
+TARGET: Penny's Diner
+VIABILITY SCORE: 100/100
+============================================================
+Location:  Penny's Diner, North Woodlawn Street, Wellington, Sumner Cou
+Phone:     N/A
+Website:   None found
+Category:  restaurant
+Rating:    4.0 stars (100 reviews)
+
+WHY THEY'RE A TARGET:
+  + Rating 4.0 -- motivated to improve
+  + 100 reviews -- established but not corporate
+  + No website -- immediate digital opportunity
+  + High-value vertical: restaurant
+
+WATCH OUTS:
+  None identified
+
+RECOMMENDED PRODUCT: Restaurant AI Assistant
+SUGGESTED PRICE POINT: $149-299/month
+PITCH ANGLE: Growth tool for a winning operation
+
+OPENING LINE:
+"I noticed Penny's Diner has 4.0 stars and 100 reviews --
+you're clearly doing something right. I built a system that
+helps businesses like yours stop losing time to tire kickers
+and unqualified leads. Takes 10 minutes to show you."
+
+BOARDROOM SESSION: Run with --vertical restaurant
+============================================================
+
+============================================================
+TARGET: East Harvey Avenue
+VIABILITY SCORE: 80/100
+============================================================
+Location:  East Harvey Avenue, Wellington, Sumner County, Kansas, 67152
+Phone:     N/A
+Website:   None found
+Category:  bank
+Rating:    4.0 stars (100 reviews)
+
+WHY THEY'RE A TARGET:
+  + Rating 4.0 -- motivated to improve
+  + 100 reviews -- established but not corporate
+  + No website -- immediate digital opportunity
+
+WATCH OUTS:
+  None identified
+
+RECOMMENDED PRODUCT: Banking AI Assistant
+SUGGESTED PRICE POINT: $149-299/month
+PITCH ANGLE: Growth tool for a winning operation
+
+OPENING LINE:
+"I noticed East Harvey Avenue has 4.0 stars and 100 reviews --
+you're clearly doing something right. I built a system that
+helps businesses like yours stop losing time to tire kickers
+and unqualified leads. Takes 10 minutes to show you."
+
+BOARDROOM SESSION: Run with --vertical banking
+============================================================
+
+============================================================
+TARGET: Impact Bank
+VIABILITY SCORE: 80/100
+============================================================
+Location:  Impact Bank, South C Street, BNSF Wellington Yard, Wellingto
+Phone:     N/A
+Website:   None found
+Category:  bank
+Rating:    4.0 stars (100 reviews)
+
+WHY THEY'RE A TARGET:
+  + Rating 4.0 -- motivated to improve
+  + 100 reviews -- established but not corporate
+  + No website -- immediate digital opportunity
+
+WATCH OUTS:
+  None identified
+
+RECOMMENDED PRODUCT: Banking AI Assistant
+SUGGESTED PRICE POINT: $149-299/month
+PITCH ANGLE: Growth tool for a winning operation
+
+OPENING LINE:
+"I noticed Impact Bank has 4.0 stars and 100 reviews --
+you're clearly doing something right. I built a system that
+helps businesses like yours stop losing time to tire kickers
+and unqualified leads. Takes 10 minutes to show you."
+
+BOARDROOM SESSION: Run with --vertical banking
+============================================================
+
+============================================================
+TARGET: RCB Bank
+VIABILITY SCORE: 80/100
+============================================================
+Location:  RCB Bank, East 16th Street, Wellington, Sumner County, Kansa
+Phone:     N/A
+Website:   None found
+Category:  bank
+Rating:    4.0 stars (100 reviews)
+
+WHY THEY'RE A TARGET:
+  + Rating 4.0 -- motivated to improve
+  + 100 reviews -- established but not corporate
+  + No website -- immediate digital opportunity
+
+WATCH OUTS:
+  None identified
+
+RECOMMENDED PRODUCT: Banking AI Assistant
+SUGGESTED PRICE POINT: $149-299/month
+PITCH ANGLE: Growth tool for a winning operation
+
+OPENING LINE:
+"I noticed RCB Bank has 4.0 stars and 100 reviews --
+you're clearly doing something right. I built a system that
+helps businesses like yours stop losing time to tire kickers
+and unqualified leads. Takes 10 minutes to show you."
+
+BOARDROOM SESSION: Run with --vertical banking
+============================================================

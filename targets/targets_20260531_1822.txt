@@ -1,0 +1,99 @@
+FIREFLY TARGET REPORT -- Caldwell KS
+Generated: 2026-05-31T18:23:13.503848
+Targets found: 3
+
+
+============================================================
+TARGET: Mi Pueblito
+VIABILITY SCORE: 100/100
+============================================================
+Location:  Mi Pueblito, East Central Avenue, Caldwell, Sumner County, K
+Phone:     N/A
+Website:   None found
+Category:  restaurant
+Rating:    4.0 stars (100 reviews)
+
+WHY THEY'RE A TARGET:
+  + Rating 4.0 -- motivated to improve
+  + 100 reviews -- established but not corporate
+  + No website -- immediate digital opportunity
+  + High-value vertical: restaurant
+
+WATCH OUTS:
+  None identified
+
+RECOMMENDED PRODUCT: Restaurant AI Assistant
+SUGGESTED PRICE POINT: $149-299/month
+PITCH ANGLE: Growth tool for a winning operation
+
+OPENING LINE:
+"I noticed Mi Pueblito has 4.0 stars and 100 reviews --
+you're clearly doing something right. I built a system that
+helps businesses like yours stop losing time to tire kickers
+and unqualified leads. Takes 10 minutes to show you."
+
+BOARDROOM SESSION: Run with --vertical restaurant
+============================================================
+
+============================================================
+TARGET: Red Barn Family Restaurant
+VIABILITY SCORE: 100/100
+============================================================
+Location:  Red Barn Family Restaurant, 624, South Main Street, Caldwell
+Phone:     N/A
+Website:   None found
+Category:  restaurant
+Rating:    4.0 stars (100 reviews)
+
+WHY THEY'RE A TARGET:
+  + Rating 4.0 -- motivated to improve
+  + 100 reviews -- established but not corporate
+  + No website -- immediate digital opportunity
+  + High-value vertical: restaurant
+
+WATCH OUTS:
+  None identified
+
+RECOMMENDED PRODUCT: Restaurant AI Assistant
+SUGGESTED PRICE POINT: $149-299/month
+PITCH ANGLE: Growth tool for a winning operation
+
+OPENING LINE:
+"I noticed Red Barn Family Restaurant has 4.0 stars and 100 reviews --
+you're clearly doing something right. I built a system that
+helps businesses like yours stop losing time to tire kickers
+and unqualified leads. Takes 10 minutes to show you."
+
+BOARDROOM SESSION: Run with --vertical restaurant
+============================================================
+
+============================================================
+TARGET: Dr. Harold A. Small
+VIABILITY SCORE: 80/100
+============================================================
+Location:  Dr. Harold A. Small, DDS, South Main Street, Caldwell, Sumne
+Phone:     N/A
+Website:   None found
+Category:  dentist
+Rating:    4.0 stars (100 reviews)
+
+WHY THEY'RE A TARGET:
+  + Rating 4.0 -- motivated to improve
+  + 100 reviews -- established but not corporate
+  + No website -- immediate digital opportunity
+
+WATCH OUTS:
+  None identified
+
+RECOMMENDED PRODUCT: Dental AI Assistant
+SUGGESTED PRICE POINT: $149-299/month
+PITCH ANGLE: Growth tool for a winning operation
+
+OPENING LINE:
+"I noticed Dr. Harold A. Small has 4.0 stars and 100 reviews --
+you're clearly doing something right. I built a system that
+helps businesses like yours stop losing time to tire kickers
+and unqualified leads. Takes 10 minutes to show you."
+
+BOARDROOM SESSION: Run with --vertical dental
+============================================================

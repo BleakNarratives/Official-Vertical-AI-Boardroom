@@ -1,0 +1,12 @@
+DOMAIN CONTEXT -- CONVENIENCE
+Generated: 2026-06-01T00:53:04.011343
+Keywords: 
+
+==================================================
+HackerNews Signal:
+  [15pts] Why programmers choose convenience over performance?
+  [1pts] Ask HN: Do you love using a chat app but also hate depending on it for work?
+  [1pts] Ask HN: What would a developer-first alternative to Shopify look like?
+  [2pts] Is There a Hyperlocal Search App?
+  [149pts] Launch HN: Patterns (YC S21) – A much faster way to build and deploy data apps
+  [4pts] Ask HN: What kind of products would you rent after landing in a new country?

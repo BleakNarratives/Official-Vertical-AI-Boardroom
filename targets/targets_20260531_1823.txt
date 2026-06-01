@@ -1,0 +1,68 @@
+FIREFLY TARGET REPORT -- Harper KS
+Generated: 2026-05-31T18:23:36.777758
+Targets found: 2
+
+
+============================================================
+TARGET: Calamitys Restaurant
+VIABILITY SCORE: 100/100
+============================================================
+Location:  Calamitys Restaurant, 102, West Main Street, Harper, Harper 
+Phone:     N/A
+Website:   None found
+Category:  restaurant
+Rating:    4.0 stars (100 reviews)
+
+WHY THEY'RE A TARGET:
+  + Rating 4.0 -- motivated to improve
+  + 100 reviews -- established but not corporate
+  + No website -- immediate digital opportunity
+  + High-value vertical: restaurant
+
+WATCH OUTS:
+  None identified
+
+RECOMMENDED PRODUCT: Restaurant AI Assistant
+SUGGESTED PRICE POINT: $149-299/month
+PITCH ANGLE: Growth tool for a winning operation
+
+OPENING LINE:
+"I noticed Calamitys Restaurant has 4.0 stars and 100 reviews --
+you're clearly doing something right. I built a system that
+helps businesses like yours stop losing time to tire kickers
+and unqualified leads. Takes 10 minutes to show you."
+
+BOARDROOM SESSION: Run with --vertical restaurant
+============================================================
+
+============================================================
+TARGET: Red Rooster Cafe
+VIABILITY SCORE: 100/100
+============================================================
+Location:  Red Rooster Cafe, West 14th Street, Harper, Harper County, K
+Phone:     N/A
+Website:   None found
+Category:  restaurant
+Rating:    4.0 stars (100 reviews)
+
+WHY THEY'RE A TARGET:
+  + Rating 4.0 -- motivated to improve
+  + 100 reviews -- established but not corporate
+  + No website -- immediate digital opportunity
+  + High-value vertical: restaurant
+
+WATCH OUTS:
+  None identified
+
+RECOMMENDED PRODUCT: Restaurant AI Assistant
+SUGGESTED PRICE POINT: $149-299/month
+PITCH ANGLE: Growth tool for a winning operation
+
+OPENING LINE:
+"I noticed Red Rooster Cafe has 4.0 stars and 100 reviews --
+you're clearly doing something right. I built a system that
+helps businesses like yours stop losing time to tire kickers
+and unqualified leads. Takes 10 minutes to show you."
+
+BOARDROOM SESSION: Run with --vertical restaurant
+============================================================

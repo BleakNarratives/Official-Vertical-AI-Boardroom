@@ -1,7 +1,24 @@
 DOMAIN CONTEXT -- AUTO DEALER
-Generated: 2026-05-31T01:31:23.686671
-Keywords: 
+Generated: 2026-05-31T14:30:00.000000
+Keywords:
 
 ==================================================
-HackerNews Signal:
+OPERATOR INTEL:
+- Avg transaction value: $35,000-$65,000 (New) / $15,000-$30,000 (Used)
+- Margin ranges: New (2-5% front-end), Used (8-15% front-end), F&I (high margin)
+- Inventory carrying costs: Floorplan interest (prime + 2-4%), reconditioning, insurance, depreciation
+- Lead gen platforms: Autotrader, Cars.com, CarGurus subscription $1k-$5k/mo
+- Biggest pain: Interest rate sensitivity, inventory sourcing, DMS complexity, digital retailing friction
+- Seasonal patterns: Q1 tax season spike, Q2/Q3 steady, Q4 year-end clearance, holiday slumps
+- Digital tools 2026: CDK/Reynolds & Reynolds, VinSolutions CRM, virtual showrooms, AI trade-in valuation
 
+COUNTRYSIDE MOTORS SPECIFIC INTEL:
+- Owner: Chris Jesina, General Manager
+- Location: 701 E 16th St Wellington KS 67152
+- Phone: (620) 326-7433
+- Brands: Polaris, CFMOTO, Bad Boy Mowers, eNVy, Hustler Turf
+- Products: ATVs, UTVs, Golf Carts, Tractors, Watercraft, Mowers
+- Facebook: 1,444 likes, 14 talking — weak engagement for Polaris dealer
+- Has website: countrysidemotors.net
+- Reviews mention: hassle-free, drove from KC to buy — good reputation
+- Gap: digital presence exists but engagement is dead

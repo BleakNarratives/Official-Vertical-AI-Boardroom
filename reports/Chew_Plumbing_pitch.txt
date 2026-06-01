@@ -1,0 +1,54 @@
+============================================================
+CHEW PLUMBING -- WELLINGTON KS
+PREPARED BY: MIKE
+DATE: MAY 31, 2026
+============================================================
+
+THE SITUATION -- WHAT I FOUND:
+Chew Plumbing has 4.3 stars and 42 Google reviews.
+No website. Always backlogged. Understaffed.
+
+That combination tells me something specific:
+You are good at the work. You have more demand than
+capacity. And you are losing jobs not because of skill
+but because of intake.
+
+THE SPECIFIC PROBLEM:
+Every call your phone person takes is a gamble.
+Is this a real job or a tire kicker?
+Does the tech need a camera snake or a cleanout kit?
+Is this a wax ring or a broken flange?
+Is the furnace a dead flame sensor or a motherboard?
+
+Wrong guess costs you a truck roll, a wasted afternoon,
+and sometimes a bad review from a customer who waited
+three hours for a guy who showed up without the right
+part.
+
+WHAT I BUILT:
+An AI intake system called Yvette.
+
+Yvette answers your phone or web chat.
+She asks the right diagnostic questions before anyone
+rolls a truck. She knows when to bring the cleanout
+saddle. She knows the difference between a universal
+thermocouple and a left-hand thread on a pre-95
+water heater. She sets the customer's expectations
+before you arrive. She filters the price shoppers
+before they waste your time.
+
+She is named after the best dispatcher I ever knew.
+She knew all of this and more, and she never forgot
+any of it.
+
+COST: $249/month
+SETUP: One afternoon
+RESULT: Fewer wasted truck rolls. Better reviews.
+More jobs completed right the first time.
+
+============================================================
+THE ASK:
+Show me your three most common call types.
+I will show you exactly how Yvette handles each one.
+Takes 20 minutes. No commitment.
+============================================================

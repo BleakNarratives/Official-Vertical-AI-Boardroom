@@ -1,5 +1,6 @@
 import sys
 import importlib
+import os
 
 def hot_reload_module(module_name: str):
     """
@@ -20,7 +21,6 @@ def hot_reload_module(module_name: str):
         return None
 
 if __name__ == "__main__":
-    import os
     # Force the local heuristic fallback by ensuring the key triggers the internal agent loop
     os.environ["OPENAI_API_KEY"] = "mock-key-for-local-testing"
     
@@ -29,7 +29,9 @@ if __name__ == "__main__":
     
     # Run the mutated offline agent logic
     scout_instance = smarter_scout.SmarterScout("Test Target", "high rep 4.7")
-    print(f"Before Reload Pitch: {scout_instance.execute_agent_scout()['one_sentence_pitch']}")
+    
+    # FIXED: Accessing via attribute dot-notation instead of dictionary string brackets
+    print(f"Before Reload Pitch: {scout_instance.execute_agent_scout().one_sentence_pitch}")
     
     print("\n--- Triggering Live Reload Logic ---")
     hot_reload_module("smarter_scout")
@@ -37,4 +39,4 @@ if __name__ == "__main__":
     # Re-import to grab the newly hot-swapped memory frame
     from smarter_scout import SmarterScout
     upgraded_instance = SmarterScout("Test Target", "high rep 4.7")
-    print(f"After Reload Pitch: {upgraded_instance.execute_agent_scout()['one_sentence_pitch']}")
+    print(f"After Reload Pitch: {upgraded_instance.execute_agent_scout().one_sentence_pitch}")
