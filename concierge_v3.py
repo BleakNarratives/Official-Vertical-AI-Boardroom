@@ -44,6 +44,11 @@ from typing import Optional, Tuple, List, Dict, Set, Callable, Any
 from enum import Enum, auto
 from collections import defaultdict
 import requests
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -294,7 +299,7 @@ def _fireworks_payload(model: str, prompt: str, system: Optional[str],
         messages.append({"role": "system", "content": system})
     messages.append({"role": "user", "content": prompt})
     return {
-        "model": f"accounts/fireworks/models/{model}",
+        "model": model,
         "messages": messages,
         "max_tokens": max_tokens or 2048,
         "temperature": 0.7
@@ -619,35 +624,53 @@ PROVIDERS = {
         base_url="{host}/api/generate",
         env_key="OLLAMA_HOST",
         models={
-            "deepseek-r1:1.5b": {
-                "capabilities": {ModelCapability.FAST, ModelCapability.CHEAP, ModelCapability.REASONING},
-                "context": 32768,
-                "cost_per_1m": 0.0,
-                "description": "Tiny reasoning model"
-            },
-            "deepseek-r1:7b": {
-                "capabilities": {ModelCapability.REASONING, ModelCapability.CODING},
-                "context": 32768,
-                "cost_per_1m": 0.0,
-                "description": "Local reasoning"
-            },
-            "llama3.2:3b": {
+            "tinydolphin:latest": {
                 "capabilities": {ModelCapability.FAST, ModelCapability.CHEAP},
-                "context": 128000,
+                "context": 2048,
                 "cost_per_1m": 0.0,
-                "description": "Fast local model"
+                "description": "Tiny local, fastest response"
             },
-            "qwen2.5:7b": {
+            "qwen2.5-coder:latest": {
                 "capabilities": {ModelCapability.CODING, ModelCapability.REASONING},
                 "context": 32768,
                 "cost_per_1m": 0.0,
-                "description": "Strong local coding"
+                "description": "Best local coding model"
             },
-            "phi4:14b": {
-                "capabilities": {ModelCapability.REASONING, ModelCapability.CODING},
-                "context": 16384,
+            "qwen2.5-coder:1.5b": {
+                "capabilities": {ModelCapability.CODING, ModelCapability.FAST},
+                "context": 32768,
                 "cost_per_1m": 0.0,
-                "description": "Microsoft local model"
+                "description": "Fast local coding"
+            },
+            "qwen2.5:1.5b": {
+                "capabilities": {ModelCapability.FAST, ModelCapability.CHEAP},
+                "context": 32768,
+                "cost_per_1m": 0.0,
+                "description": "Tiny Qwen general"
+            },
+            "phi3:latest": {
+                "capabilities": {ModelCapability.REASONING, ModelCapability.CODING},
+                "context": 128000,
+                "cost_per_1m": 0.0,
+                "description": "Microsoft Phi3"
+            },
+            "phi3:mini": {
+                "capabilities": {ModelCapability.FAST, ModelCapability.CHEAP},
+                "context": 128000,
+                "cost_per_1m": 0.0,
+                "description": "Phi3 mini, low RAM"
+            },
+            "llama3:latest": {
+                "capabilities": {ModelCapability.REASONING, ModelCapability.CODING},
+                "context": 8192,
+                "cost_per_1m": 0.0,
+                "description": "Llama 3 general"
+            },
+            "vertical-ai:latest": {
+                "capabilities": {ModelCapability.REASONING, ModelCapability.CODING},
+                "context": 8192,
+                "cost_per_1m": 0.0,
+                "description": "Custom Vertical AI model"
             },
         },
         headers_fn=_ollama_headers,
@@ -784,7 +807,8 @@ class ConciergeClient:
                 self.providers[name] = config
                 # For Ollama, store the host URL in the key field
                 if name == "ollama":
-                    config.base_url = key or "http://127.0.0.1:11434"
+                    host = key or "http://127.0.0.1:11434"
+                config.base_url = config.base_url.replace("{host}", host)
 
     def _start_maintenance(self):
         """Start background maintenance thread."""
