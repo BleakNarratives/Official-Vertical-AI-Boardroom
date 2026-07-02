@@ -2092,10 +2092,8 @@ async function runForge() {
     return;
   }
   if (!S.bridgeOnline) {
-    addMsg('', 'BRIDGE OFFLINE — START whorl_bridge.py FIRST', '#cc4433', 'sys');
-    return;
+    addMsg('', 'BRIDGE OFFLINE — RUN: whorl bridge  (pip install git+https://github.com/BleakNarratives/Whorl)', '#cc4433', 'sys');
   }
-
   const btn = document.getElementById('btn-forge');
   if (btn) btn.disabled = true;
   addMsg('', `FORGE // GENERATING PITCH FOR: "${raw.substring(0,60)}"`, '#ffb347', 'sys');
@@ -2130,7 +2128,7 @@ async function runForge() {
 // ── QRD of transcript ────────────────────────────────────────────────────────
 async function runQRD() {
   if (!S.bridgeOnline) {
-    addMsg('', 'BRIDGE OFFLINE — START whorl_bridge.py FIRST', '#cc4433', 'sys');
+    addMsg('', 'BRIDGE OFFLINE — RUN: whorl bridge  (pip install git+https://github.com/BleakNarratives/Whorl)', '#cc4433', 'sys');
     return;
   }
   const msgs = Array.from(document.querySelectorAll('#trans-feed .tm-msg, #trans-feed .tm-verdict'))
