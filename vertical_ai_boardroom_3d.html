@@ -664,10 +664,28 @@ const S = {
   agentMeshes: {},
   agentHeads: {},
   agentLabels: {},
+  agentBodies: {},       // torso mesh refs for speak-shudder
+  agentArms: {},         // arm group refs for gesturing
+  agentNecks: {},        // neck mesh refs for head-nod
   animQueue: {},
+  agentStates: {},       // 'normal' | 'speaking' | 'angry' | 'hover'
+  agentBlinkTimer: {},   // per-agent blink countdown
+  agentFaceFrame: {},    // current face variant index
+  agentLeanTarget: {},   // target lean angle per agent
+  agentLean: {},         // current lean (smoothed)
+  hoveredAgent: null,
+  mouseWorld: new THREE.Vector2(),
 };
 
-AGENTS.forEach(a => { S.temps[a.id] = 20; S.animQueue[a.id] = null; });
+AGENTS.forEach((a, i) => {
+  S.temps[a.id] = 20;
+  S.animQueue[a.id] = null;
+  S.agentStates[a.id] = 'normal';
+  S.agentBlinkTimer[a.id] = 2 + Math.random() * 3;
+  S.agentFaceFrame[a.id] = 0;
+  S.agentLeanTarget[a.id] = 0;
+  S.agentLean[a.id] = 0;
+});
 
 // ============================================================
 // THREE.JS SCENE
@@ -709,6 +727,7 @@ function initThree() {
   window.addEventListener('resize', onResize);
   renderer.domElement.addEventListener('click', onSceneClick);
   renderer.domElement.addEventListener('touchend', onSceneTouch);
+  renderer.domElement.addEventListener('mousemove', onMouseMove);
 
   document.addEventListener('dragover', e => e.preventDefault());
   document.addEventListener('drop', e => {
@@ -976,7 +995,7 @@ function buildTableObjects() {
 }
 
 function buildAgents() {
-  AGENTS.forEach(agent => {
+  AGENTS.forEach((agent, agentIdx) => {
     const group = new THREE.Group();
     group.position.set(agent.tablePos.x, 0.92, agent.tablePos.z);
     group.userData = { agentId: agent.id, type: 'agent' };
@@ -993,7 +1012,7 @@ function buildAgents() {
     back.position.set(0, -0.12, 0.6);
     group.add(back);
 
-    // Body / torso
+    // Body / torso -- store ref for speak-shudder
     const bodyMat = new THREE.MeshLambertMaterial({ color: 0x1a1a2a });
     const body = new THREE.Mesh(
       new THREE.BoxGeometry(0.4, 0.5, 0.25),
@@ -1001,6 +1020,7 @@ function buildAgents() {
     );
     body.position.set(0, -0.05, 0.1);
     group.add(body);
+    S.agentBodies[agent.id] = body;
 
     // Suit lapels
     const lapelMat = new THREE.MeshLambertMaterial({ color: 0x101018 });
@@ -1013,20 +1033,48 @@ function buildAgents() {
     lapelR.rotation.z = -0.15;
     group.add(lapelR);
 
-    // Neck
+    // Arms -- left and right, stored for gesture animation
+    const armMat = new THREE.MeshLambertMaterial({ color: 0x161620 });
+    const handMat = new THREE.MeshLambertMaterial({ color: 0xb07850 });
+
+    const armL = new THREE.Group();
+    const upperL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.28, 0.1), armMat);
+    upperL.position.y = -0.14;
+    armL.add(upperL);
+    const handL = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.1, 0.07), handMat);
+    handL.position.y = -0.32;
+    armL.add(handL);
+    armL.position.set(-0.28, 0.1, 0.1);
+    armL.rotation.x = 0.3;
+    group.add(armL);
+
+    const armR = new THREE.Group();
+    const upperR = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.28, 0.1), armMat);
+    upperR.position.y = -0.14;
+    armR.add(upperR);
+    const handR = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.1, 0.07), handMat);
+    handR.position.y = -0.32;
+    armR.add(handR);
+    armR.position.set(0.28, 0.1, 0.1);
+    armR.rotation.x = 0.3;
+    group.add(armR);
+
+    S.agentArms[agent.id] = { L: armL, R: armR };
+
+    // Neck -- store ref for head-nod
     const neckMat = new THREE.MeshLambertMaterial({ color: 0xc4946a });
     const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.08, 0.15, 8), neckMat);
     neck.position.set(0, 0.28, 0.05);
     group.add(neck);
+    S.agentNecks[agent.id] = neck;
 
     // HEAD -- billboard sprite with VT323 text drawn to canvas
     const headCanvas = document.createElement('canvas');
-    headCanvas.width = 128;
-    headCanvas.height = 128;
+    headCanvas.width = 256;
+    headCanvas.height = 256;
     const ctx = headCanvas.getContext('2d');
 
-    // Draw head
-    drawHead(ctx, agent, headCanvas.width, headCanvas.height, 'normal');
+    drawHead(ctx, agent, headCanvas.width, headCanvas.height, 'normal', false);
 
     const headTex = new THREE.CanvasTexture(headCanvas);
     const headMat = new THREE.SpriteMaterial({
@@ -1035,7 +1083,7 @@ function buildAgents() {
       depthWrite: false,
     });
     const headSprite = new THREE.Sprite(headMat);
-    headSprite.scale.set(0.6, 0.6, 0.6);
+    headSprite.scale.set(0.7, 0.7, 0.7);
     headSprite.position.set(0, 0.65, 0.05);
     headSprite.userData = { agentId: agent.id, type: 'agent', canvas: headCanvas, ctx, agent };
     group.add(headSprite);
@@ -1070,52 +1118,111 @@ function buildAgents() {
   });
 }
 
-function drawHead(ctx, agent, w, h, state) {
+// face sets per state: normal, speaking, angry, hover, blink
+const FACE_SETS = {
+  normal:   [0],
+  speaking: [1, 3, 1, 3],   // cycles through talking frames
+  angry:    [2, 3, 2],
+  hover:    [3, 0],
+  blink:    ['blink'],
+};
+
+function drawHead(ctx, agent, w, h, state, blinking) {
   ctx.clearRect(0, 0, w, h);
 
-  // Background circle
-  const grad = ctx.createRadialGradient(w/2, h/2-5, 5, w/2, h/2-5, w/2-8);
-  grad.addColorStop(0, '#2a1e10');
+  const isSpeak = state === 'speaking';
+  const isAngry = state === 'angry';
+  const isHover = state === 'hover';
+
+  // Background circle -- slightly larger on speak/hover
+  const radius = isSpeak || isHover ? w/2 - 6 : w/2 - 12;
+  const grad = ctx.createRadialGradient(w/2, h/2-4, 4, w/2, h/2-4, radius);
+  grad.addColorStop(0, isAngry ? '#2a0808' : '#2a1e10');
   grad.addColorStop(1, '#0a0804');
   ctx.beginPath();
-  ctx.arc(w/2, h/2-5, w/2-10, 0, Math.PI*2);
+  ctx.arc(w/2, h/2-4, radius, 0, Math.PI*2);
   ctx.fillStyle = grad;
   ctx.fill();
 
+  // Glow ring on speak/hover
+  if (isSpeak || isHover) {
+    ctx.shadowColor = agent.colorHex;
+    ctx.shadowBlur = isSpeak ? 24 : 12;
+  }
+
   // Border
   ctx.strokeStyle = agent.colorHex;
-  ctx.lineWidth = state === 'speaking' ? 4 : 2;
+  ctx.lineWidth = isSpeak ? 5 : isHover ? 3 : 2;
   ctx.stroke();
-
-  // Glow on speak
-  if (state === 'speaking') {
-    ctx.shadowColor = agent.colorHex;
-    ctx.shadowBlur = 15;
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-  }
-
-  // Face text
-  const faceIdx = state === 'angry' ? 2 : state === 'speaking' ? 1 : 0;
-  const faceStr = agent.faces[faceIdx % agent.faces.length];
-
-  ctx.fillStyle = agent.colorHex;
-  ctx.font = `${Math.round(w * 0.28)}px "Courier New"`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-
-  if (state === 'speaking') {
-    ctx.shadowColor = agent.colorHex;
-    ctx.shadowBlur = 8;
-  }
-
-  ctx.fillText(faceStr, w/2, h/2 - 4);
   ctx.shadowBlur = 0;
 
-  // Title text
-  ctx.fillStyle = 'rgba(200,160,80,0.5)';
-  ctx.font = `${Math.round(w * 0.09)}px "Courier New"`;
-  ctx.fillText(agent.title.substring(0, 14), w/2, h - 16);
+  // Pixel-scanline effect inside head
+  ctx.save();
+  ctx.globalAlpha = 0.06;
+  ctx.fillStyle = '#000';
+  for (let y = 0; y < h; y += 4) {
+    ctx.fillRect(0, y, w, 2);
+  }
+  ctx.restore();
+
+  // Choose face expression
+  let faceStr;
+  if (blinking) {
+    faceStr = '(-_-)';
+  } else if (isAngry) {
+    faceStr = agent.faces[2] || agent.faces[0];
+  } else if (isSpeak) {
+    faceStr = agent.faces[1] || agent.faces[0];
+  } else if (isHover) {
+    faceStr = agent.faces[3] || agent.faces[1] || agent.faces[0];
+  } else {
+    faceStr = agent.faces[0];
+  }
+
+  // Face glow
+  if (isSpeak) {
+    ctx.shadowColor = agent.colorHex;
+    ctx.shadowBlur = 14;
+  } else if (isAngry) {
+    ctx.shadowColor = '#cc4433';
+    ctx.shadowBlur = 10;
+  } else if (isHover) {
+    ctx.shadowColor = agent.colorHex;
+    ctx.shadowBlur = 6;
+  }
+
+  ctx.fillStyle = isAngry ? '#ff6644' : agent.colorHex;
+  ctx.font = `${Math.round(w * 0.22)}px "Courier New"`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(faceStr, w/2, h/2 - 6);
+  ctx.shadowBlur = 0;
+
+  // Status dot top-right
+  const dotColor = isSpeak ? '#88ff88' : isAngry ? '#ff4444' : '#2a1a08';
+  ctx.beginPath();
+  ctx.arc(w - 20, 20, 5, 0, Math.PI * 2);
+  ctx.fillStyle = dotColor;
+  if (isSpeak) {
+    ctx.shadowColor = '#88ff88';
+    ctx.shadowBlur = 8;
+  }
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Name tag bar at bottom
+  ctx.fillStyle = 'rgba(10,7,4,0.7)';
+  ctx.fillRect(8, h - 36, w - 16, 26);
+  ctx.strokeStyle = agent.colorHex;
+  ctx.lineWidth = 1;
+  ctx.globalAlpha = 0.4;
+  ctx.strokeRect(8, h - 36, w - 16, 26);
+  ctx.globalAlpha = 1;
+
+  ctx.fillStyle = 'rgba(200,160,80,0.7)';
+  ctx.font = `${Math.round(w * 0.075)}px "Courier New"`;
+  ctx.textAlign = 'center';
+  ctx.fillText(agent.title.substring(0, 16), w/2, h - 20);
 }
 
 function updateAgentHead(agentId, state) {
@@ -1123,39 +1230,145 @@ function updateAgentHead(agentId, state) {
   const agent = AGENTS.find(a => a.id === agentId);
   if (!head || !agent) return;
 
-  drawHead(head.ctx, agent, head.canvas.width, head.canvas.height, state);
+  S.agentStates[agentId] = state;
+  drawHead(head.ctx, agent, head.canvas.width, head.canvas.height, state, false);
   head.sprite.material.map.needsUpdate = true;
+
+  // Set lean targets based on state
+  const group = S.agentMeshes[agentId];
+  if (state === 'speaking') {
+    // Lean forward (into the table) — toward the camera
+    S.agentLeanTarget[agentId] = (Math.random() - 0.5) * 0.12;
+  } else if (state === 'angry') {
+    // Wild lean — random aggressive side lean
+    S.agentLeanTarget[agentId] = (Math.random() > 0.5 ? 1 : -1) * (0.08 + Math.random() * 0.12);
+  } else {
+    S.agentLeanTarget[agentId] = 0;
+  }
 }
 
 // ============================================================
 // ANIMATION LOOP
 // ============================================================
-function animate() {
+const _dt = { last: 0 };
+
+function animate(timestamp) {
   requestAnimationFrame(animate);
+  const dt = Math.min((timestamp - _dt.last) / 1000, 0.05);
+  _dt.last = timestamp;
   const t = clock.getElapsedTime();
 
-  // Pendant flicker
+  // Pendant flicker -- more dramatic
   if (S.pendantLight) {
-    const flicker = Math.sin(t * 0.7) * 0.05 + Math.sin(t * 13) * 0.02;
+    const flicker = Math.sin(t * 0.7) * 0.08
+                  + Math.sin(t * 13.3) * 0.04
+                  + Math.sin(t * 47.1) * 0.015;
     S.pendantLight.intensity = S.pendantBase + flicker;
-    if (S.bulb) S.bulb.material.color.setHex(flicker > 0 ? 0xffd090 : 0xffb860);
+    if (S.bulb) S.bulb.material.color.setHex(flicker > 0.02 ? 0xffd090 : 0xffb040);
   }
 
-  // Agent idle animations -- subtle float and sway
   AGENTS.forEach((agent, i) => {
     const group = S.agentMeshes[agent.id];
     if (!group) return;
-    const phase = i * 1.3;
-    // Gentle breathing bob
-    group.position.y = 0.92 + Math.sin(t * 0.8 + phase) * 0.008;
-    // Subtle lean
-    group.rotation.z = Math.sin(t * 0.4 + phase) * 0.015;
-    // Head follows camera loosely
+
+    const state   = S.agentStates[agent.id] || 'normal';
+    const isSpeak = state === 'speaking';
+    const isAngry = state === 'angry';
+    const isHover = state === 'hover';
+    const phase   = i * 1.7 + 0.5;
+
+    // ── BREATHING / BOB ──
+    // Faster + bigger when speaking/angry
+    const breathRate = isSpeak ? 2.2 : isAngry ? 3.0 : 0.9;
+    const breathAmp  = isSpeak ? 0.022 : isAngry ? 0.018 : 0.009;
+    group.position.y = 0.92 + Math.sin(t * breathRate + phase) * breathAmp;
+
+    // ── LEAN / SWAY ──
+    // Smooth toward target lean
+    const leanSpeed = isSpeak ? 5.0 : 2.0;
+    S.agentLean[agent.id] += (S.agentLeanTarget[agent.id] - S.agentLean[agent.id]) * leanSpeed * dt;
+
+    // Idle sway on top of lean
+    const idleSway = isAngry ? Math.sin(t * 4.5 + phase) * 0.04
+                             : Math.sin(t * 0.55 + phase) * 0.018;
+    group.rotation.z = S.agentLean[agent.id] + idleSway;
+
+    // ── HEAD TRACKING toward camera (partial billboard) ──
+    const dx = camera.position.x - group.position.x;
+    const dz = camera.position.z - group.position.z;
+    const targetY = Math.atan2(dx, dz) * 0.35;
+    group.rotation.y += (targetY - group.rotation.y) * 3.0 * dt;
+
+    // ── BODY SHUDDER (speak/angry) ──
+    const body = S.agentBodies[agent.id];
+    if (body) {
+      if (isSpeak) {
+        body.rotation.z = Math.sin(t * 18 + phase) * 0.022;
+        body.rotation.x = Math.sin(t * 12 + phase) * 0.012;
+        body.position.z = 0.1 + Math.sin(t * 9 + phase) * 0.006;
+      } else if (isAngry) {
+        body.rotation.z = Math.sin(t * 28 + phase) * 0.04;
+        body.rotation.x = Math.sin(t * 20 + phase) * 0.02;
+        body.position.z = 0.1 + Math.sin(t * 14 + phase) * 0.01;
+      } else {
+        body.rotation.z += (-body.rotation.z) * 4 * dt;
+        body.rotation.x += (-body.rotation.x) * 4 * dt;
+        body.position.z += (0.1 - body.position.z) * 4 * dt;
+      }
+    }
+
+    // ── ARM GESTURES ──
+    const arms = S.agentArms[agent.id];
+    if (arms) {
+      if (isSpeak) {
+        // Animated talking gestures -- each agent gets a different gesture pattern
+        const gestPhase = t * 2.2 + i * 0.8;
+        arms.L.rotation.x = 0.3 + Math.sin(gestPhase) * 0.45;
+        arms.L.rotation.z = Math.sin(gestPhase * 0.7) * 0.18;
+        arms.R.rotation.x = 0.3 + Math.sin(gestPhase + Math.PI * 0.6) * 0.4;
+        arms.R.rotation.z = Math.sin(gestPhase * 0.9 + 1.2) * 0.15;
+      } else if (isAngry) {
+        // Tense, stabbing gestures
+        arms.L.rotation.x = 0.3 + Math.sin(t * 5 + phase) * 0.6;
+        arms.L.rotation.z = 0.15 + Math.sin(t * 4) * 0.2;
+        arms.R.rotation.x = 0.3 + Math.sin(t * 5 + phase + 1) * 0.55;
+        arms.R.rotation.z = -0.15 + Math.sin(t * 4 + 0.5) * -0.2;
+      } else {
+        // Return to rest -- slouched on table
+        arms.L.rotation.x += (0.3 - arms.L.rotation.x) * 3 * dt;
+        arms.L.rotation.z += (0.0 - arms.L.rotation.z) * 3 * dt;
+        arms.R.rotation.x += (0.3 - arms.R.rotation.x) * 3 * dt;
+        arms.R.rotation.z += (0.0 - arms.R.rotation.z) * 3 * dt;
+      }
+    }
+
+    // ── BLINK SYSTEM ──
+    S.agentBlinkTimer[agent.id] -= dt;
+    if (S.agentBlinkTimer[agent.id] <= 0) {
+      // Trigger blink redraw
+      const head = S.agentHeads[agent.id];
+      if (head && state === 'normal') {
+        drawHead(head.ctx, agent, head.canvas.width, head.canvas.height, state, true);
+        head.sprite.material.map.needsUpdate = true;
+        setTimeout(() => {
+          if (S.agentStates[agent.id] === 'normal') {
+            drawHead(head.ctx, agent, head.canvas.width, head.canvas.height, 'normal', false);
+            head.sprite.material.map.needsUpdate = true;
+          }
+        }, 120);
+      }
+      // Reset timer: 2-5s with occasional rapid double blink
+      S.agentBlinkTimer[agent.id] = 2 + Math.random() * 3.5;
+    }
+
+    // ── HEAD SPRITE BOB (independent of body) ──
     const head = S.agentHeads[agent.id];
     if (head) {
-      const dx = camera.position.x - group.position.x;
-      const dz = camera.position.z - group.position.z;
-      group.rotation.y = Math.atan2(dx, dz) * 0.3; // partial billboard
+      const headBob = isSpeak ? Math.sin(t * 9 + phase) * 0.012 : Math.sin(t * 0.9 + phase) * 0.004;
+      head.sprite.position.y = 0.65 + headBob;
+      // Subtle head tilt
+      const tiltAmp = isSpeak ? 0.06 : 0.02;
+      head.sprite.material.rotation = Math.sin(t * (isSpeak ? 2.8 : 0.6) + phase) * tiltAmp;
     }
   });
 
@@ -1199,6 +1412,64 @@ function checkIntersect() {
       if (agent) openOO1(agent);
     }
   }
+}
+
+function onMouseMove(event) {
+  const rect = renderer.domElement.getBoundingClientRect();
+  mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+  raycaster.setFromCamera(mouse, camera);
+  const meshList = [];
+  AGENTS.forEach(a => {
+    const g = S.agentMeshes[a.id];
+    if (g) g.traverse(c => { if (c.isMesh || c.isSprite) meshList.push(c); });
+  });
+
+  const hits = raycaster.intersectObjects(meshList, false);
+  let hoveredId = null;
+  if (hits.length > 0) {
+    let obj = hits[0].object;
+    while (obj && !obj.userData.agentId) obj = obj.parent;
+    if (obj && obj.userData.agentId) hoveredId = obj.userData.agentId;
+  }
+
+  // Update hover states and set lean targets
+  AGENTS.forEach(agent => {
+    const wasHovered = S.hoveredAgent === agent.id;
+    const isHovered  = hoveredId === agent.id;
+    const curState   = S.agentStates[agent.id];
+
+    if (isHovered && curState === 'normal') {
+      S.agentStates[agent.id] = 'hover';
+      const head = S.agentHeads[agent.id];
+      if (head) {
+        drawHead(head.ctx, agent, head.canvas.width, head.canvas.height, 'hover', false);
+        head.sprite.material.map.needsUpdate = true;
+      }
+      renderer.domElement.style.cursor = 'pointer';
+    } else if (!isHovered && curState === 'hover') {
+      S.agentStates[agent.id] = 'normal';
+      const head = S.agentHeads[agent.id];
+      if (head) {
+        drawHead(head.ctx, agent, head.canvas.width, head.canvas.height, 'normal', false);
+        head.sprite.material.map.needsUpdate = true;
+      }
+    }
+
+    // Lean slightly toward cursor on hover
+    if (isHovered) {
+      // Figure out which side of center the cursor is
+      const group = S.agentMeshes[agent.id];
+      const lean = (group.position.x > 0) ? -0.04 : 0.04;
+      S.agentLeanTarget[agent.id] = lean;
+    } else if (curState !== 'speaking' && curState !== 'angry') {
+      S.agentLeanTarget[agent.id] = 0;
+    }
+  });
+
+  if (!hoveredId) renderer.domElement.style.cursor = 'default';
+  S.hoveredAgent = hoveredId;
 }
 
 function onResize() {
