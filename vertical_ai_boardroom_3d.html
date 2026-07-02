@@ -90,6 +90,79 @@ html, body {
 
 .hud-stats em { color: #ffb347; font-style: normal; }
 
+/* ── WHORL PANEL (module status bar under HUD) ── */
+#whorl-panel {
+  position: absolute;
+  top: 88px; left: 0; right: 0;
+  padding: 3px 14px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+  pointer-events: none;
+  font-size: 0.42rem;
+  letter-spacing: 1.5px;
+}
+
+.wp-label {
+  color: #ffb347;
+  font-weight: bold;
+  margin-right: 4px;
+}
+
+.wp-offline { color: #cc4433; }
+
+.wp-mod {
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-size: 0.42rem;
+}
+
+.wp-mod.ok  { background: rgba(138,184,112,0.18); color: #8ab870; border: 1px solid #8ab87040; }
+.wp-mod.err { background: rgba(204,68,51,0.18);   color: #cc4433; border: 1px solid #cc443340; }
+
+.wp-db {
+  color: #4a3010;
+  font-size: 0.4rem;
+  margin-left: 2px;
+}
+
+.wp-db em { color: #7a6030; font-style: normal; }
+
+/* ── BEARING TOOLTIP ── */
+#bearing-tip {
+  display: none;
+  position: fixed;
+  left: 14px;
+  bottom: 110px;
+  background: rgba(8,6,3,0.94);
+  border: 1px solid #ffb34760;
+  color: #e8d5a0;
+  font-family: 'Courier New', monospace;
+  font-size: 0.5rem;
+  letter-spacing: 1px;
+  line-height: 1.8;
+  padding: 8px 12px;
+  pointer-events: none;
+  z-index: 200;
+  max-width: 280px;
+  box-shadow: 0 0 14px rgba(255,179,71,0.15);
+}
+
+#bearing-tip strong { color: #ffb347; font-size: 0.52rem; }
+#bearing-tip em     { color: #7a6030; font-style: normal; }
+
+/* ── WHORL CTRL BUTTONS ── */
+.ctrl-whorl {
+  border-color: #ffb34760 !important;
+  color: #ffb347 !important;
+}
+
+.ctrl-whorl:hover {
+  background: rgba(255,179,71,0.15) !important;
+  border-color: #ffb347 !important;
+}
+
 /* ── SWARM BAR ── */
 #swarm-bar {
   position: fixed;
@@ -494,7 +567,12 @@ body::before {
       BUTTSCORP &nbsp;◆&nbsp; BLEAK NARRATIVES
     </div>
   </div>
+  <!-- Whorl module status bar -->
+  <div id="whorl-panel"><span class="wp-offline">WHORL OFFLINE</span></div>
 </div>
+
+<!-- Bearing tooltip (shown on agent hover when bridge is live) -->
+<div id="bearing-tip"></div>
 
 <!-- SWARM BAR -->
 <div id="swarm-bar">
@@ -514,6 +592,8 @@ body::before {
     <button class="ctrl" onclick="triggerChaos()">☠ CHAOS</button>
     <button class="ctrl" onclick="clearBoard()">CLEAR</button>
     <button class="ctrl" onclick="checkBridge()">PING BRIDGE</button>
+    <button class="ctrl ctrl-whorl" id="btn-forge" onclick="runForge()">FORGE PITCH</button>
+    <button class="ctrl ctrl-whorl" id="btn-qrd"   onclick="runQRD()">TAILOR QRD</button>
     <input type="file" id="file-input" accept=".txt,.json,.md,.csv" onchange="handleFile(event)">
   </div>
   <div id="input-row">
@@ -675,6 +755,7 @@ const S = {
   agentLean: {},         // current lean (smoothed)
   hoveredAgent: null,
   mouseWorld: new THREE.Vector2(),
+  bearings: null,
 };
 
 AGENTS.forEach((a, i) => {
@@ -1468,7 +1549,12 @@ function onMouseMove(event) {
     }
   });
 
-  if (!hoveredId) renderer.domElement.style.cursor = 'default';
+  if (!hoveredId) {
+    renderer.domElement.style.cursor = 'default';
+    hideBearingTooltip();
+  } else {
+    showBearingTooltip(hoveredId);
+  }
   S.hoveredAgent = hoveredId;
 }
 
@@ -1556,8 +1642,8 @@ async function convene() {
 // BRIDGE MODE
 // ============================================================
 async function runViaBridge(brief) {
-  addMsg('', 'ROUTING TO CLI BACKEND...', '', 'sys');
-  document.getElementById('loading-sub').textContent = 'RUNNING VERTICAL AI CLI...';
+  addMsg('', 'ROUTING TO WHORL BRIDGE // HOTSEAT DELIBERATION STARTING', '#8ab870', 'sys');
+  document.getElementById('loading-sub').textContent = 'WHORL HOTSEAT RUNNING...';
 
   try {
     const res = await fetch(`${BRIDGE}/convene`, {
@@ -1901,20 +1987,175 @@ function clearBoard() {
 // ============================================================
 async function checkBridge() {
   try {
-    const res = await fetch(`${BRIDGE}/status`, { signal: AbortSignal.timeout(2000) });
+    const res = await fetch(`${BRIDGE}/status`, { signal: AbortSignal.timeout(2500) });
     const data = await res.json();
     if (data.status === 'online') {
+      const wasOffline = !S.bridgeOnline;
       S.bridgeOnline = true;
       document.getElementById('bridge-status').textContent = 'ONLINE';
       document.getElementById('bridge-status').style.color = '#8ab870';
-      addMsg('', 'BRIDGE CONNECTED // CLI BACKEND ACTIVE', '#8ab870', 'sys');
-      if (!S.transcriptOpen) toggleTranscript();
+
+      if (wasOffline) {
+        addMsg('', 'WHORL BRIDGE CONNECTED // CLI BACKEND ACTIVE', '#8ab870', 'sys');
+        if (!S.transcriptOpen) toggleTranscript();
+      }
+
+      // Update Whorl module status panel
+      updateWhorlPanel(data);
+
+      // Load bearings from bridge (non-blocking)
+      fetchBearings();
+
+      // Populate scout ticker
+      fetchScouts();
     }
   } catch(e) {
     S.bridgeOnline = false;
     document.getElementById('bridge-status').textContent = 'OFFLINE';
     document.getElementById('bridge-status').style.color = '#cc4433';
+    updateWhorlPanel(null);
   }
+}
+
+// ── Whorl module status panel ────────────────────────────────────────────────
+function updateWhorlPanel(data) {
+  const panel = document.getElementById('whorl-panel');
+  if (!panel) return;
+  if (!data) {
+    panel.innerHTML = '<span class="wp-offline">WHORL OFFLINE</span>';
+    return;
+  }
+  const mods = data.modules || {};
+  const db   = data.db    || {};
+  const rows = Object.entries(mods).map(([k, ok]) =>
+    `<span class="wp-mod ${ok ? 'ok' : 'err'}">${k.replace('whorl.','').toUpperCase()}</span>`
+  ).join('');
+  const dbRows = Object.entries(db).map(([t, n]) =>
+    `<span class="wp-db">${t}: <em>${n}</em></span>`
+  ).join('');
+  panel.innerHTML = `<span class="wp-label">WHORL</span>${rows}${dbRows ? '<br>' + dbRows : ''}`;
+}
+
+// ── Bearings fetch + overlay on hover ───────────────────────────────────────
+async function fetchBearings() {
+  try {
+    const res  = await fetch(`${BRIDGE}/bearings`, { signal: AbortSignal.timeout(2000) });
+    const data = await res.json();
+    if (data.bearings) S.bearings = data.bearings;
+  } catch(e) { /* silent */ }
+}
+
+function showBearingTooltip(agentId) {
+  if (!S.bearings) return;
+  const b = S.bearings[agentId];
+  if (!b) return;
+  const tip = document.getElementById('bearing-tip');
+  if (!tip) return;
+  const AXIS_X = ['local','regional','national','global'];
+  const AXIS_Y = ['surface','analysis','synthesis','strategy'];
+  const AXIS_Z = ['read-only','draft','send','deploy'];
+  tip.innerHTML =
+    `<strong>BEARING // ${b.label}</strong><br>` +
+    `x: ${AXIS_X[b.x] || b.x} &nbsp; y: ${AXIS_Y[b.y] || b.y} &nbsp; z: ${AXIS_Z[b.z] || b.z}<br>` +
+    `escalate: ${b.cw ? 'YES' : 'NO'} &nbsp; delegate: ${b.ccw ? 'YES' : 'NO'}<br>` +
+    `<em>${b.desc}</em>`;
+  tip.style.display = 'block';
+}
+
+function hideBearingTooltip() {
+  const tip = document.getElementById('bearing-tip');
+  if (tip) tip.style.display = 'none';
+}
+
+// ── Scout ticker ─────────────────────────────────────────────────────────────
+async function fetchScouts() {
+  try {
+    const res  = await fetch(`${BRIDGE}/scouts`, { signal: AbortSignal.timeout(2000) });
+    const data = await res.json();
+    if (data.signals && data.signals.length > 0) {
+      const ticker = document.getElementById('ticker-text');
+      if (!ticker) return;
+      const scoutSegment = data.signals.slice(0, 8).map(s =>
+        `[SCOUT] ${s.signal_class?.toUpperCase() || 'SIGNAL'}: ${s.headline} — ${s.action || ''}`
+      ).join(' &nbsp;◆&nbsp; ');
+      // Prepend to existing ticker content
+      ticker.innerHTML = scoutSegment + ' &nbsp;◆&nbsp; ' + ticker.innerHTML;
+    }
+  } catch(e) { /* silent */ }
+}
+
+// ── Forge from brief ─────────────────────────────────────────────────────────
+async function runForge() {
+  const raw = document.getElementById('brief').value.trim();
+  if (!raw) {
+    addMsg('', 'ENTER A TARGET IN THE BRIEF FIELD FIRST', '#cc4433', 'sys');
+    return;
+  }
+  if (!S.bridgeOnline) {
+    addMsg('', 'BRIDGE OFFLINE — START whorl_bridge.py FIRST', '#cc4433', 'sys');
+    return;
+  }
+
+  const btn = document.getElementById('btn-forge');
+  if (btn) btn.disabled = true;
+  addMsg('', `FORGE // GENERATING PITCH FOR: "${raw.substring(0,60)}"`, '#ffb347', 'sys');
+
+  // Try to parse vertical from brief
+  const verticals = ['bank','restaurant','hvac','plumber','realestate','retail','general'];
+  const lc = raw.toLowerCase();
+  const vertical = verticals.find(v => lc.includes(v)) || 'general';
+
+  try {
+    const res  = await fetch(`${BRIDGE}/forge`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ target: raw.substring(0, 100), vertical }),
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    addMsg('FORGE', `THE HOOK: "${data.hook}"`, '#ffb347', 'msg');
+    addMsg('FORGE', `SITUATION: ${data.situation}`, '#ffb347', 'msg');
+    addMsg('FORGE', `RISK: ${data.risk}`, '#ffb347', 'msg');
+    addMsg('FORGE', `FIX: ${data.fix}`, '#ffb347', 'msg');
+    addMsg('FORGE', `ASK: ${data.ask}`, '#ffb347', 'msg');
+    if (data.cost) addMsg('FORGE', `COST: ${data.cost} — GUARANTEE: ${data.guarantee}`, '#ffb347', 'msg');
+  } catch(e) {
+    addMsg('', `FORGE ERROR: ${e.message}`, '#cc4433', 'sys');
+  }
+
+  if (btn) btn.disabled = false;
+}
+
+// ── QRD of transcript ────────────────────────────────────────────────────────
+async function runQRD() {
+  if (!S.bridgeOnline) {
+    addMsg('', 'BRIDGE OFFLINE — START whorl_bridge.py FIRST', '#cc4433', 'sys');
+    return;
+  }
+  const msgs = Array.from(document.querySelectorAll('#trans-feed .tm-msg, #trans-feed .tm-verdict'))
+    .map(el => el.textContent).join('\n');
+  if (!msgs.trim()) {
+    addMsg('', 'NO TRANSCRIPT TO SUMMARIZE YET — CONVENE FIRST', '#cc4433', 'sys');
+    return;
+  }
+  const btn = document.getElementById('btn-qrd');
+  if (btn) btn.disabled = true;
+  addMsg('', 'TAILOR // GENERATING QRD...', '#7ac4d4', 'sys');
+  try {
+    const res  = await fetch(`${BRIDGE}/tailor/qrd`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: msgs.substring(0, 3000) }),
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    addMsg('TAILOR', `BLINK: ${data.blink}`, '#7ac4d4', 'msg');
+    addMsg('TAILOR', `BRIEF: ${data.brief}`, '#7ac4d4', 'msg');
+  } catch(e) {
+    addMsg('', `QRD ERROR: ${e.message}`, '#cc4433', 'sys');
+  }
+  if (btn) btn.disabled = false;
 }
 
 // ============================================================
