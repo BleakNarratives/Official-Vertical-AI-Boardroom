@@ -40,14 +40,10 @@ load_env()
 
 
 def synthesize(target_name, cfpb_data, web_data):
-    if not ROUTER_AVAILABLE:
-        lines = [f"BRIEF: {target_name}",
-                 f"CFPB Complaints: {cfpb_data.get('complaint_count',0)}"]
-        for f in cfpb_data.get("risk_flags",[]): lines.append(f"  RISK: {f}")
-        for f in web_data.get("opportunity_flags",[]): lines.append(f"  OPP: {f}")
-        return "\n".join(lines)
-
-    prompt = f"""
+    # Try calling the model first if keys are available
+    has_keys = os.environ.get("GEMINI_API_KEY") or os.environ.get("GROQ_API_KEY") or os.environ.get("OPENAI_API_KEY")
+    if ROUTER_AVAILABLE and has_keys:
+        prompt = f"""
 TARGET: {target_name}
 CFPB: {json.dumps(cfpb_data)[:1500]}
 WEB: {json.dumps(web_data)[:1500]}
@@ -58,11 +54,46 @@ Sharp corporate intelligence briefing. Specific. Reference actual data.
 3. RECOMMENDED ANGLE
 4. CONFIDENCE (high/medium/low and why)
 """
-    try:
-        result, provider = call_model(prompt, tier=ModelTier.FAST)
-        return f"[{provider}]\n\n{result.strip()}"
-    except Exception as e:
-        return f"Synthesis failed: {e}"
+        try:
+            result, provider = call_model(prompt, tier=ModelTier.FAST)
+            return f"[{provider}]\n\n{result.strip()}"
+        except Exception:
+            pass
+
+    # Dynamic Rule-Based Local Synthesis Fallback
+    lines = [
+        f"=== LOCAL SCOUT BRIEFING FOR {target_name.upper()} ===",
+        f"CFPB Complaints: {cfpb_data.get('complaint_count', 0)} recent reports."
+    ]
+    if cfpb_data.get("complaint_count", 0) > 0:
+        lines.append("\n1. RISK PROFILE:")
+        lines.append(f"   - Active CFPB footprint with {cfpb_data.get('complaint_count')} complaints.")
+        for flag in cfpb_data.get("risk_flags", []):
+            lines.append(f"   - FLAG: {flag}")
+    else:
+        lines.append("\n1. RISK PROFILE:")
+        lines.append("   - Clean CFPB record. No consumer regulatory complaints detected.")
+
+    lines.append("\n2. OPPORTUNITY SIGNAL:")
+    web_results = web_data.get("results", [])
+    if web_results:
+        lines.append(f"   - Found {len(web_results)} relevant web search results.")
+        for flag in web_data.get("opportunity_flags", []):
+            lines.append(f"   - {flag}")
+    else:
+        lines.append("   - No active web presence / social signals detected in basic sweep.")
+        lines.append("   - High-value target for a digital-first outreach campaign.")
+
+    lines.append("\n3. RECOMMENDED ANGLE:")
+    if cfpb_data.get("complaint_count", 0) > 0:
+        lines.append("   - Quality Shield: Focus on customer experience triage to preempt complaints.")
+    elif not web_results:
+        lines.append("   - Digital Foundation: Build out an automated local lead intake & review capture page.")
+    else:
+        lines.append("   - Automation & Response: Propose an AI concierge layer to capture off-hours inquiries.")
+
+    lines.append("\n4. CONFIDENCE: Medium (Local rule-based heuristic synthesis)")
+    return "\n".join(lines)
 
 
 def scout_target(name, location=None, cfpb_only=False, web_only=False):

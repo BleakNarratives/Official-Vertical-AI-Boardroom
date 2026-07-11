@@ -125,6 +125,90 @@ def print_champion(champion, session_id):
     print(f"{'='*60}\n")
 
 
+def auto_enrich_with_scouts(context):
+    if not context:
+        return
+    raw_text = context.get("raw", "")
+    if not raw_text or len(raw_text) > 300: # Don't scout if it's a huge document
+        return
+
+    # Check for known businesses or if it looks like a business name
+    known_targets = [
+        "Impact Bank", "RCB Bank", "Fabiola's Mexican Restaurant",
+        "Canelo's Mexican Grill", "Penny's Diner", "Big Cheese Pizza",
+        "Chew Plumbing", "Countryside Motors"
+    ]
+
+    target_name = None
+    for kt in known_targets:
+        if kt.lower() in raw_text.lower():
+            target_name = kt
+            break
+
+    # If not in known list, check if it's a short title-like text (likely a business target)
+    if not target_name and len(raw_text.split()) <= 5 and any(w[0].isupper() for w in raw_text.split() if w.isalpha()):
+        target_name = raw_text.strip()
+
+    if target_name:
+        print(f"\n  [Scout Automation] Detected target business: '{target_name}'")
+        print(f"  [Scout Automation] Launching Swarm Intelligence & SmarterScout...")
+
+        scout_data = {}
+        # 1. Swarm Intel (CFPB + Web Search)
+        try:
+            import sys
+            scouts_dir = os.path.join(os.path.dirname(__file__), "scouts")
+            if scouts_dir not in sys.path:
+                sys.path.insert(0, scouts_dir)
+            from swarm_intel import scout_target
+            intel = scout_target(target_name)
+            scout_data["swarm_intel"] = intel
+            print(f"  [Scout Automation] Swarm Intel completed (Risk Score: {intel.get('risk_score')}, Opportunity Score: {intel.get('opportunity_score')})")
+        except Exception as e:
+            print(f"  [Scout Automation] Swarm Intel failed: {e}")
+
+        # 2. SmarterScout
+        try:
+            from smarter_scout import SmarterScout
+            raw_ctx = ""
+            if "swarm_intel" in scout_data:
+                intel = scout_data["swarm_intel"]
+                raw_ctx = f"CFPB: {json.dumps(intel.get('cfpb', {}))}\nWeb: {json.dumps(intel.get('web', {}))}"
+            else:
+                raw_ctx = raw_text
+
+            scouter = SmarterScout(target_name, raw_ctx)
+            smarter_res = scouter.execute_agent_scout()
+            scout_data["smarter_scout"] = smarter_res
+            print(f"  [Scout Automation] SmarterScout completed (Reputation: {smarter_res.get('reputation_score')}, Bottleneck: {smarter_res.get('operational_bottleneck')})")
+        except Exception as e:
+            print(f"  [Scout Automation] SmarterScout failed: {e}")
+
+        if scout_data:
+            # Inject into context so the boardroom and simulator have access
+            context["data"]["scout_data"] = scout_data
+
+            # Formulate a nice summary to append to context content
+            scout_summary = f"\n\n=== AUTOMATED SCOUT INTEL FOR {target_name.upper()} ===\n"
+            if "swarm_intel" in scout_data:
+                intel = scout_data["swarm_intel"]
+                scout_summary += f"Risk Score: {intel.get('risk_score')}/100 | Opportunity Score: {intel.get('opportunity_score')}/100\n"
+                scout_summary += f"Web Presence: {'Yes' if intel.get('has_website') else 'No'}\n"
+                scout_summary += f"Briefing:\n{intel.get('briefing', '')}\n"
+            if "smarter_scout" in scout_data:
+                s_scout = scout_data["smarter_scout"]
+                scout_summary += f"Reputation Score: {s_scout.get('reputation_score')}/5.0\n"
+                scout_summary += f"Operational Bottleneck: {s_scout.get('operational_bottleneck')}\n"
+                scout_summary += f"One-Sentence Pitch: {s_scout.get('one_sentence_pitch')}\n"
+                scout_summary += f"Suggested App Name: {s_scout.get('suggested_app_name')}\n"
+                scout_summary += f"Demo UI Headline: {s_scout.get('demo_ui_headline')}\n"
+            scout_summary += "================================================\n"
+
+            context["data"]["content"] = context["data"].get("content", "") + scout_summary
+            context["raw"] = context["raw"] + scout_summary
+            context["label"] = f"{target_name} (Scouted)"
+
+
 def main():
     parser = argparse.ArgumentParser(description="VERTICAL AI -- Strategic Decision Engine")
     g = parser.add_mutually_exclusive_group()
@@ -172,6 +256,8 @@ def main():
     print(f" {' | '.join(active)}\n")
 
     context = normalize_input(args)
+    if context:
+        auto_enrich_with_scouts(context)
 
     # Auto-scout vertical context
     if context and args.vertical:

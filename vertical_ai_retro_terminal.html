@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VAI-OS // RETRO CLI TERMINAL</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body, html {
+  width: 100%;
+  height: 100%;
+  background: #040c04;
+  font-family: 'VT323', monospace;
+  color: #33ff33;
+  font-size: 1.35rem;
+  line-height: 1.25;
+  overflow: hidden;
+  text-shadow: 0 0 5px rgba(51, 255, 51, 0.7);
+}
+
+/* CRT Screen bulge and scanline overlay */
+#screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#screen::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  z-index: 20;
+  background-size: 100% 4px, 6px 100%;
+  pointer-events: none;
+}
+
+#screen::before {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: radial-gradient(circle, transparent 65%, rgba(0, 0, 0, 0.7) 100%);
+  z-index: 21;
+  pointer-events: none;
+}
+
+/* Terminal output area */
+#output {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 12px;
+  padding-right: 10px;
+}
+
+#output::-webkit-scrollbar {
+  width: 6px;
+}
+#output::-webkit-scrollbar-thumb {
+  background: #22aa22;
+  border-radius: 3px;
+}
+
+/* Prompt and cursor line */
+#input-line {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+#prompt {
+  color: #88ff88;
+  margin-right: 12px;
+  white-space: nowrap;
+}
+
+#cli-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #33ff33;
+  font-family: 'VT323', monospace;
+  font-size: 1.45rem;
+  text-shadow: 0 0 5px rgba(51, 255, 51, 0.7);
+  caret-color: transparent;
+}
+
+#cursor {
+  display: inline-block;
+  width: 10px;
+  height: 20px;
+  background: #33ff33;
+  margin-left: 2px;
+  animation: blink 0.8s infinite;
+  box-shadow: 0 0 5px #33ff33;
+  vertical-align: middle;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Text styles */
+.header-text {
+  color: #88ff88;
+  margin-bottom: 15px;
+}
+.system-msg {
+  color: #88ff88;
+}
+.error-msg {
+  color: #ff3333;
+  text-shadow: 0 0 5px rgba(255, 51, 51, 0.7);
+}
+.success-msg {
+  color: #88ff88;
+}
+.verdict-go {
+  color: #33ff33;
+  font-weight: bold;
+  border: 1px dashed #33ff33;
+  padding: 4px;
+  display: inline-block;
+}
+.verdict-nogo {
+  color: #ff3333;
+  font-weight: bold;
+  border: 1px dashed #ff3333;
+  padding: 4px;
+  display: inline-block;
+}
+.verdict-conditional {
+  color: #ffcc33;
+  font-weight: bold;
+  border: 1px dashed #ffcc33;
+  padding: 4px;
+  display: inline-block;
+}
+.dim {
+  color: #117711;
+}
+
+/* Flicker effect */
+@keyframes crt-flicker {
+  0% { opacity: 0.985; }
+  50% { opacity: 0.995; }
+  100% { opacity: 0.985; }
+}
+#screen {
+  animation: crt-flicker 0.15s infinite;
+}
+</style>
+</head>
+<body onclick="focusInput()">
+
+<div id="screen">
+  <div id="output">
+    <div class="header-text">
+========================================================================
+██╗   ██╗███████╗██████╗ ████████╗██╗ ██████╗ █████╗ ██╗         ██████╗ ██╗
+██║   ██║██╔════╝██╔══██╗╚══██╔══╝██║██╔════╝██╔══██╗██║        ██╔════╝ ██║
+██║   ██║█████╗  ██████╔╝   ██║   ██║██║     ███████║██║  █████╗██║      ██║
+╚██╗ ██╔╝██╔══╝  ██╔══██╗   ██║   ██║██║     ██╔══██║██║  ╚════╝██║      ██║
+ ╚████╔╝ ███████╗██║  ██║   ██║   ██║╚██████╗██║  ██║███████╗   ╚██████╗ ██║
+  ╚═══╝  ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚═╝ ╚═════╝╚═╝  ╚═╝╚══════╝    ╚═════╝ ╚═╝
+========================================================================
+VAI-OS v3.0 // RETRO STRATEGIC TERMINAL // BUTTSCORP / BLEAK NARRATIVES
+ENTER 'help' TO VIEW COMMAND MATRIX.
+------------------------------------------------------------------------
+    </div>
+  </div>
+
+  <div id="input-line">
+    <span id="prompt">vai@boardroom:~$</span>
+    <input id="cli-input" type="text" autocomplete="off" autofocus spellcheck="false" onkeydown="handleInput(event)" />
+    <span id="cursor"></span>
+  </div>
+</div>
+
+<script>
+const BRIDGE = 'http://127.0.0.1:8767';
+const outputEl = document.getElementById('output');
+const inputEl = document.getElementById('cli-input');
+let cmdHistory = [];
+let historyIndex = -1;
+
+function focusInput() {
+  inputEl.focus();
+}
+
+function writeLine(text, className = '') {
+  const line = document.createElement('div');
+  line.className = className;
+  line.innerHTML = text;
+  outputEl.appendChild(line);
+  outputEl.scrollTop = outputEl.scrollHeight;
+}
+
+function handleInput(e) {
+  if (e.key === 'Enter') {
+    const rawVal = inputEl.value;
+    const val = rawVal.trim();
+    inputEl.value = '';
+
+    if (val) {
+      cmdHistory.push(rawVal);
+      historyIndex = cmdHistory.length;
+    }
+
+    writeLine(`<span style="color: #88ff88;">vai@boardroom:~$</span> ${escapeHTML(rawVal)}`);
+    processCommand(val);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (historyIndex > 0) {
+      historyIndex--;
+      inputEl.value = cmdHistory[historyIndex];
+    }
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (historyIndex < cmdHistory.length - 1) {
+      historyIndex++;
+      inputEl.value = cmdHistory[historyIndex];
+    } else {
+      historyIndex = cmdHistory.length;
+      inputEl.value = '';
+    }
+  }
+}
+
+function escapeHTML(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+async function processCommand(cmdLine) {
+  if (!cmdLine) return;
+  const parts = cmdLine.split(' ');
+  const cmd = parts[0].toLowerCase();
+  const args = parts.slice(1).join(' ');
+
+  switch (cmd) {
+    case 'help':
+      printHelp();
+      break;
+    case 'clear':
+      outputEl.innerHTML = '';
+      break;
+    case 'sessions':
+      await listSessions();
+      break;
+    case 'session':
+      if (!args) {
+        writeLine('Error: Specify session_id (e.g. "session vai_abcdef12")', 'error-msg');
+      } else {
+        await loadSession(args.trim());
+      }
+      break;
+    case 'scout':
+      if (!args) {
+        writeLine('Error: Specify target business name (e.g. "scout Countryside Motors")', 'error-msg');
+      } else {
+        await runScout(args.trim());
+      }
+      break;
+    case 'convene':
+      if (!args) {
+        writeLine('Error: Specify a business idea or target to convene (e.g. "convene bakery in small town")', 'error-msg');
+      } else {
+        await conveneBoardroom(args.trim());
+      }
+      break;
+    case 'chaos':
+      runChaos();
+      break;
+    default:
+      writeLine(`Command not recognized: '${escapeHTML(cmd)}'. Type 'help' for options.`, 'error-msg');
+  }
+}
+
+function printHelp() {
+  writeLine(`
+COMMAND MATRIX:
+  help                             Show this menu
+  clear                            Clear screen
+  sessions                         List recent boardroom sessions
+  session &lt;session_id&gt;             Load detailed analysis of a session
+  scout &lt;business_name&gt;            Run target-specific scout and smarter intelligence
+  convene &lt;brief&gt;                  Convene the boardroom to debate and breed champion copy
+  chaos                            Trigger terminal feedback loop
+`);
+}
+
+async function listSessions() {
+  writeLine('FETCHING RECENT SESSIONS...', 'dim');
+  try {
+    const res = await fetch(`${BRIDGE}/sessions`);
+    const data = await res.json();
+    if (data.length === 0) {
+      writeLine('No saved sessions found.');
+      return;
+    }
+    writeLine(`FOUND ${data.length} SAVED BOARDROOM RUNS:`, 'system-msg');
+    data.forEach(s => {
+      const verdict = s.verdict || 'unknown';
+      const verdictClass = verdict === 'go' ? 'success-msg' : (verdict === 'no-go' ? 'error-msg' : 'system-msg');
+      writeLine(`  [${s.session}] ${s.label.padEnd(35)} | Verdict: <span class="${verdictClass}">${verdict.toUpperCase()}</span> | Champion: ${s.champion || 'None'}`);
+    });
+  } catch (e) {
+    writeLine(`BRIDGE OFFLINE: ${e.message}. Start the bridge server: python3 boardroom_bridge.py`, 'error-msg');
+  }
+}
+
+async function loadSession(sid) {
+  writeLine(`RETRIEVING RUN: ${sid}...`, 'dim');
+  try {
+    const res = await fetch(`${BRIDGE}/session/${sid}`);
+    if (!res.ok) throw new Error('Session not found');
+    const d = await res.json();
+
+    writeLine(`------------------------------------------------------------------------`, 'dim');
+    writeLine(`SESSION: ${d.session_id} // TARGET: ${d.context?.label}`, 'system-msg');
+    writeLine(`------------------------------------------------------------------------`, 'dim');
+
+    // Print debate
+    const debate = d.boardroom?.debate || [];
+    debate.forEach(e => {
+      writeLine(`[${e.agent} Round ${e.round}]:`, 'system-msg');
+      writeLine(`  "${e.argument}"`, 'dim');
+    });
+
+    const synthesis = d.boardroom?.synthesis || {};
+    writeLine(`\nCHAIRMAN STATEMENT:`, 'system-msg');
+    writeLine(`  ${synthesis.chairman_statement || 'No statement'}`);
+    const verdict = synthesis.verdict || 'unknown';
+    const vClass = verdict === 'go' ? 'verdict-go' : (verdict === 'no-go' ? 'verdict-nogo' : 'verdict-conditional');
+    writeLine(`\nVERDICT: <span class="${vClass}">${verdict.toUpperCase()}</span>\n`);
+  } catch (e) {
+    writeLine(`ERROR: ${e.message}`, 'error-msg');
+  }
+}
+
+async function runScout(target) {
+  writeLine(`LAUNCHING AUTONOMOUS TARGET SCOUT FOR: ${escapeHTML(target)}...`, 'dim');
+  try {
+    const res = await fetch(`${BRIDGE}/scout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ target })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    const intel = data.swarm_intel || {};
+    const smarter = data.smarter_scout || {};
+
+    writeLine(`\n[+] SCOUT DISCOVERY MATCH: ${intel.name || target}`, 'success-msg');
+    writeLine(`------------------------------------------------------------------------`, 'dim');
+    writeLine(`CFPB Footprint: ${intel.cfpb?.complaint_count || 0} complaints detected.`);
+    writeLine(`Opportunity Score: ${intel.opportunity_score}/100 | Risk Score: ${intel.risk_score}/100`);
+    if (intel.opportunity_flags?.length > 0) {
+      writeLine(`Opportunities:`, 'system-msg');
+      intel.opportunity_flags.forEach(f => writeLine(`  + ${f}`));
+    }
+
+    writeLine(`\n[+] SMARTER_SCOUT COGNITIVE ENGINE`, 'success-msg');
+    writeLine(`------------------------------------------------------------------------`, 'dim');
+    writeLine(`Reputation Score: ${smarter.reputation_score || 'N/A'}/5.0`);
+    writeLine(`Real Bottleneck:  ${smarter.operational_bottleneck || 'None identified'}`);
+    writeLine(`Tailored Pitch:   "${smarter.one_sentence_pitch || 'None'}"`);
+    writeLine(`Suggested App:    ${smarter.suggested_app_name || 'None'}`);
+    writeLine(`Demo UI Headline: "${smarter.demo_ui_headline || 'None'}"`);
+    writeLine(`------------------------------------------------------------------------`, 'dim');
+  } catch (e) {
+    writeLine(`SCOUT ENCOUNTERED ERRORS: ${e.message}`, 'error-msg');
+  }
+}
+
+async function conveneBoardroom(brief) {
+  writeLine(`CONVENING VERTICAL AI BOARDROOM DEBATE ON: "${escapeHTML(brief)}"`, 'system-msg');
+  writeLine(`THE BOARDROOM IS NOW IN SESSION. DELIBERATING... (Est. 10-30 seconds)`, 'dim');
+
+  try {
+    const res = await fetch(`${BRIDGE}/convene`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ brief, rounds: 1, tracks: 1, iterations: 1 })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    writeLine(`\n------------------------------------------------------------------------`, 'dim');
+    writeLine(`BOARD DEBATE LOGS`, 'success-msg');
+    writeLine(`------------------------------------------------------------------------`, 'dim');
+
+    const debate = data.boardroom?.debate || [];
+    debate.forEach(e => {
+      writeLine(`[${e.agent} R${e.round}]:`, 'system-msg');
+      writeLine(`  ${e.argument}\n`);
+    });
+
+    const synthesis = data.boardroom?.synthesis || {};
+    writeLine(`\nCHAIRMAN STATEMENT:`, 'success-msg');
+    writeLine(`  ${synthesis.chairman_statement}`);
+
+    const v = synthesis.verdict || 'unknown';
+    const vClass = v === 'go' ? 'verdict-go' : (v === 'no-go' ? 'verdict-nogo' : 'verdict-conditional');
+    writeLine(`\nVERDICT: <span class="${vClass}">${v.toUpperCase()}</span>\n`);
+
+    if (data.champion) {
+      writeLine(`\n[+] MUTATED STRATEGY CHAMPION:`, 'success-msg');
+      writeLine(`  Name:   ${data.champion.name}`);
+      writeLine(`  Thesis: ${data.champion.thesis}`);
+      writeLine(`  Action: ${data.champion.first_action}`);
+    }
+  } catch (e) {
+    writeLine(`DEBATE FAILED: ${e.message}`, 'error-msg');
+  }
+}
+
+function runChaos() {
+  let count = 0;
+  const timer = setInterval(() => {
+    const lines = [
+      'CRITICAL: BUFFER OVERFLOW IN CONCIERGE LAYER',
+      'MUTATOR PROCESS: self_optimize() ENGAGED',
+      'WARNING: UNTESTED AST MUTATION CYCLE STARTED',
+      '0x4F2A7E1C: stack overflow at segment register',
+      'REAPER SERVICE: cleaning orphaned processes...',
+      'SWARM DISPATCHER: Wellington KS live nodes responsive',
+      'MUTATING AGENT: [CFO] persona -> chaotic_conserve'
+    ];
+    writeLine(lines[Math.floor(Math.random() * lines.length)], 'error-msg');
+    count++;
+    if (count > 25) {
+      clearInterval(timer);
+      writeLine('CHAOS STABILIZED. CHIP REGISTER SAFE.', 'success-msg');
+    }
+  }, 120);
+}
+</script>
+</body>
+</html>
