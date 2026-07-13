@@ -62,6 +62,71 @@ You are the most interesting person in the room and you know it.""",
 }
 
 
+import random
+
+def alter_query_wording(raw_text, agent_name):
+    # Clean up and normalize spacing
+    text = " ".join((raw_text or "").split())
+    if not text:
+        return "Evaluate this strategy."
+
+    # Simple word substitution mapping to prevent quoting and add variance
+    synonyms = {
+        "should we": ["is it strategically sound to", "are we advised to", "is there a clear path to", "does it make financial sense to"],
+        "how to": ["what are the core mechanics of", "by what leverage points can we execute", "what is the process to"],
+        "open a": ["launch a new", "establish an independent", "deploy a"],
+        "start a": ["initiate a", "kick off a", "create a"],
+        "scale": ["expand the footprint of", "accelerate the growth of", "increase operational capacity of", "drive enterprise growth for"],
+        "build": ["architect", "engineer", "implement", "deploy"],
+        "improve": ["optimize", "elevate", "refine", "modernize"],
+        "business": ["commercial venture", "enterprise", "operation"],
+        "idea": ["strategic thesis", "proposition", "concept"],
+        "help": ["empower", "support the modernization of", "optimize"],
+        "problems": ["operational bottlenecks", "friction points"],
+        "statistics": ["empirical benchmarks", "market metrics", "data indicators"],
+    }
+
+    altered = text
+    for word, replacements in synonyms.items():
+        lower_alt = altered.lower()
+        idx = lower_alt.find(word)
+        if idx != -1:
+            rep = random.choice(replacements)
+            altered = altered[:idx] + rep + altered[idx + len(word):]
+
+    # Define agent-specific framing templates
+    framing_templates = {
+        "CFO": [
+            "Assess the capital requirements, cash flow volatility, and margin pressure for the following proposal: '{altered}'",
+            "Focusing strictly on unit economics, payback timeline, and margin leakage, evaluate this thesis: '{altered}'",
+            "What is the capital efficiency score and return-on-investment horizon of: '{altered}'?"
+        ],
+        "CMO": [
+            "Analyze the brand positioning, customer acquisition cost (CAC), and customer psychology for: '{altered}'",
+            "From the perspective of customer empathy, touchpoints, and value proposition, critique this concept: '{altered}'",
+            "How do we win trust and scale retention for the following service model: '{altered}'?"
+        ],
+        "CRO": [
+            "Identify the operational single-point-of-failure and regulatory risk vectors for: '{altered}'",
+            "What is the absolute worst-case scenario that completely derails this operation: '{altered}'?",
+            "Pinpoint the legal exposure, liability, and competitive threats surrounding this setup: '{altered}'"
+        ],
+        "MARKET_ANALYST": [
+            "Examine the market saturation, competitive layout, and macro timing signals for: '{altered}'",
+            "What citable analog exits, market trends, or industry benchmarks validate or invalidate: '{altered}'?",
+            "Detail the external headwinds and comparable market metrics regarding: '{altered}'"
+        ],
+        "DEVIL": [
+            "Invert the strongest assumption about the following proposal and dismantle it: '{altered}'",
+            "Why is the consensus surrounding this idea potentially a dangerous illusion: '{altered}'?",
+            "Present a compelling, high-conviction counter-argument to the core premise of: '{altered}'"
+        ]
+    }
+
+    templates = framing_templates.get(agent_name, ["Evaluate this: '{altered}'"])
+    return random.choice(templates).format(altered=altered)
+
+
 def compress_input(context, max_chars=1200):
     """Trim context to fit provider limits."""
     raw = context.get('raw') or context.get('data',{}).get('content','')
@@ -97,15 +162,30 @@ def run_boardroom(context: dict, rounds: int = 2) -> dict:
                 for e in debate_log[-2:]
             ]) if debate_log else "You are the first to speak."
 
-            prompt = f"""BOARDROOM INPUT:
-{input_summary}
+            altered_query = alter_query_wording(context.get('raw', ''), agent_name)
 
-PRIOR ARGUMENTS:
+            scout_block = ""
+            if context.get("data", {}).get("scout_data"):
+                scout_block = f"\nADDITIONAL SCOUT EVIDENCE:\n{json.dumps(context['data']['scout_data'], indent=2)}"
+
+            content_block = ""
+            if compressed.get("content") and len(compressed["content"]) > 0:
+                if compressed["content"].strip() != context.get("raw", "").strip():
+                    content_block = f"\nDOCUMENT/SOURCE CONTENT SNIPPET:\n{compressed['content']}"
+
+            prompt = f"""BOARDROOM OBJECTIVE (REWORDED FOR YOUR PERSPECTIVE):
+{altered_query}
+{scout_block}
+{content_block}
+
+PRIOR DEBATE ARGUMENTS:
 {prior_args}
 
-YOUR TURN. Be specific. Reference actual input data.
-Do not summarize others — respond to them or build on them.
-Max 150 words. No hedging. No filler."""
+CRITICAL INSTRUCTIONS:
+1. DO NOT quote or repeat the objective or the original query word-for-word.
+2. DO NOT blindly agree with or mimic other board members. Support consensus only if you have a distinct reason, otherwise point out what is being overlooked.
+3. Bring in unique qualitative insights or distinct financial/customer angles. Avoid repeating the exact same statistics or metrics mentioned previously.
+4. Keep your answer under 150 words. Be sharp, blunt, and highly opinionated."""
 
             print(f"  [{agent_name}] ...", end="", flush=True)
             try:

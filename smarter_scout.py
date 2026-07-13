@@ -30,8 +30,15 @@ class SmarterScout:
         """
         print(f'[*] Analyzing digital footprint for: {self.target_name}...')
         if self.api_key == 'mock-key-for-local-testing':
-            return self._run_local_heuristic()
-        return self._run_llm_structured_synthesis()
+            res = self._run_local_heuristic()
+        else:
+            res = self._run_llm_structured_synthesis()
+
+        if hasattr(res, 'model_dump'):
+            return res.model_dump()
+        elif hasattr(res, 'dict'):
+            return res.dict()
+        return res
 
     def _run_local_heuristic(self) -> Dict[str, Any]:
         print('[+] Swarm Mutation Active! Executing upgraded internal local engine matrix...')

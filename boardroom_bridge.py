@@ -132,6 +132,39 @@ class Handler(BaseHTTPRequestHandler):
                 f.write(content)
             self._json({'saved': fpath, 'chars': len(content)})
 
+        elif path == '/scout':
+            target = body.get('target', '')
+            location = body.get('location', '')
+            if not target:
+                self._json({'error': 'no target specified'}, 400)
+                return
+
+            try:
+                # Add scouts directory to python path
+                import sys
+                scouts_dir = os.path.join(BASE, "scouts")
+                if scouts_dir not in sys.path:
+                    sys.path.insert(0, scouts_dir)
+                if BASE not in sys.path:
+                    sys.path.insert(0, BASE)
+
+                from swarm_intel import scout_target
+                from smarter_scout import SmarterScout
+
+                intel = scout_target(target, location if location else None)
+
+                # Run smarter scout
+                raw_ctx = f"CFPB: {json.dumps(intel.get('cfpb', {}))}\nWeb: {json.dumps(intel.get('web', {}))}"
+                scouter = SmarterScout(target, raw_ctx)
+                smarter_res = scouter.execute_agent_scout()
+
+                self._json({
+                    'swarm_intel': intel,
+                    'smarter_scout': smarter_res
+                })
+            except Exception as e:
+                self._json({'error': str(e)}, 500)
+
         else:
             self._json({'error': 'not found'}, 404)
 
