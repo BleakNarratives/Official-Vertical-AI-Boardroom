@@ -126,7 +126,7 @@ def print_champion(champion, session_id):
 
 
 def auto_enrich_with_scouts(context):
-    if not context:
+    if not context or not isinstance(context.get("data"), dict):
         return
     raw_text = context.get("raw", "")
     if not raw_text or len(raw_text) > 300: # Don't scout if it's a huge document
